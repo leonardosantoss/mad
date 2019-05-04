@@ -157,8 +157,8 @@ int findMininalDuration(){
 }
 
 void minWorkersWithES(int durMin){
-    // we assume that the tasks ID's are an interval between 0 and N_VERTS and all of the tasks
-    //id between this interval exist
+    // we assume that the tasks ID's are integers between 0 and N_VERTS and all of the numbers
+    //inu the interval are tasks id for one task
     int delta = -1;
     int newDelta = 0;
     int firstToFinish = durMin;
