@@ -25,6 +25,15 @@ queue <int>q;
 string line;
 ifstream myfile ("data.txt");
 
+
+int MinimalDuration(){
+    int f=-1;
+    for(int i=0;i<N_VERTS;i++){
+        if(EF[i] > f) f = EF[i];
+    }
+    return f;
+}
+
 void getTaskNeighbours(int id){
         // get nodes from the remaining of the line :  tarefa([int1, int2], duration,workers)
         int node;
@@ -112,8 +121,12 @@ void resetDataStructures(){
         EF[i] = 0;
     }
 }
-
-int findMininalDuration(){
+void findEF(){
+    for(int i = 0; i<N_VERTS;i++){
+        EF[i] = ES[i] + taskDuration[i];
+    }
+}
+void findES(){
     map<int,int>::iterator it;
     int durMin = -1;
     int corr = 0;
@@ -128,7 +141,6 @@ int findMininalDuration(){
 
     while(!q.empty()){
         int tmp;
-        bool flag = false;
         tmp = q.front();
         q.pop();
 
@@ -136,7 +148,6 @@ int findMininalDuration(){
             durMin = ES[tmp];
         }
         for(it=graph[tmp].begin();it!=graph[tmp].end();it++){
-            flag = true;
             if(ES[it->first] < ES[tmp] + taskDuration[tmp]){
                 ES[it->first] = ES[tmp] + taskDuration[tmp];
             }
@@ -145,15 +156,9 @@ int findMininalDuration(){
                 q.push(it->first);
             } 
         }
-        if(!flag){
-            if(taskDuration[tmp] > corr ) corr = taskDuration[tmp];
-        }
 
     }
 
-    durMin += corr;
-    return durMin;
-    
 }
 
 void minWorkersWithES(int durMin){
@@ -166,9 +171,7 @@ void minWorkersWithES(int durMin){
     map<int,int>::iterator it;
 
     int size;
-    for(int i=0; i<N_VERTS ;i++){
-        EF[i] = ES[i] + taskDuration[i];
-    }
+    
 
      for(int i=0; i<N_VERTS;i++){
          if(degreeIn[i] == 0){
@@ -217,9 +220,14 @@ int main (){
     resetDataStructures();
     readData();
 
-    durMin = findMininalDuration();
+
+    findES();
+    findEF();
+    
+    minWorkersWithES(durMin); 
+    durMin = MinimalDuration();
     cout << "Duração Mínima: "<< durMin << endl;
-    minWorkersWithES(durMin);
+
 
     return 0;
 }
