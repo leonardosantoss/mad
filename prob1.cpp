@@ -7,7 +7,7 @@
 #include <fstream>
 #include <queue>
  
-#define N_VERTS 1000 
+#define N_VERTS 10000 
 using namespace std;
 
 int nWorkers[N_VERTS];
@@ -161,12 +161,12 @@ void findES(){
 
 }
 
-void minWorkersWithES(int durMin){
+void minWorkersWithES(){
     // we assume that the tasks ID's are integers between 0 and N_VERTS and all of the numbers
     //inu the interval are tasks id for one task
     int delta = -1;
     int newDelta = 0;
-    int firstToFinish = durMin;
+    int firstToFinish;
     vector<int>currentTasks;
     map<int,int>::iterator it;
 
@@ -198,13 +198,15 @@ void minWorkersWithES(int durMin){
                 // tirar currentTasks[i] de currentTasks
                 currentTasks.erase(currentTasks.begin()+i);
                 size = size-1;
+                i--;
             }   
         }
         newDelta = 0;
         for(int i=0;i<currentTasks.size();i++){
             newDelta += nWorkers[currentTasks[i]];
+            
         }
-
+    
         if(delta < newDelta){
             delta = newDelta;
         }
@@ -224,8 +226,8 @@ int main (){
     findES();
     findEF();
     
-    minWorkersWithES(durMin); 
     durMin = MinimalDuration();
+    minWorkersWithES(); 
     cout << "Duração Mínima: "<< durMin << endl;
 
 
