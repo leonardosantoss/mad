@@ -7,28 +7,32 @@
 #include <fstream>
 #include <queue>
  
-#define N_VERTS 10000 
+#define MAX_N_VERTS 1000
 using namespace std;
 
-int nWorkers[N_VERTS];
-int taskDuration[N_VERTS];
-int degreeIn[N_VERTS];
-int visited[N_VERTS];
-int ES[N_VERTS];
-int EF[N_VERTS];
-
+int nWorkers[MAX_N_VERTS];
+int taskDuration[MAX_N_VERTS];
+int degreeIn[MAX_N_VERTS];
+int degreeOut[MAX_N_VERTS];
+int visited[MAX_N_VERTS];
+int ES[MAX_N_VERTS];
+int EF[MAX_N_VERTS];
+int LF[MAX_N_VERTS];
+int durMin, minWorkers;
 
 size_t first,last;
-map <int,int>graph[N_VERTS];
+map <int,int>graph[MAX_N_VERTS];
+map <int,int>graphT[MAX_N_VERTS]; // transposto
 queue <int>q;
 
 string line;
 ifstream myfile ("data.txt");
 
+int N_VERTS = 0;
 
 int MinimalDuration(){
     int f=-1;
-    for(int i=0;i<N_VERTS;i++){
+    for(int i=1;i<=N_VERTS;i++){
         if(EF[i] > f) f = EF[i];
     }
     return f;
@@ -47,19 +51,27 @@ void getTaskNeighbours(int id){
         // treat the precedences [int1,int2,int3] and create graph
         last = tmp.find(",");
         while(last != string::npos){
+           
             precs = tmp.substr(0,last);
             node = atoi(precs.c_str());
             graph[id][node] = 0;
+            graphT[node][id] = 0;
             degreeIn[node]++;
+            degreeOut[id]++;
             tmp.erase(0, last+1);
             last = tmp.find(",");
         }
         
         if(!tmp.empty()){
+            
             node = atoi(tmp.c_str());
             graph[id][node] = 0;
+            graphT[node][id] = 0;
             degreeIn[node]++;
+            degreeOut[id]++;
+           
         }
+        
 
     
        
@@ -97,6 +109,7 @@ void readData(){
     // listOfPrecs example : [2,5,7]
 
     while(getline(myfile, line)) {
+        N_VERTS++;
         //erase tarefa
         last = line.find("(");
         line.erase(0, last);
@@ -112,17 +125,51 @@ void readData(){
 }
 
 void resetDataStructures(){
-    for(int i=0; i<N_VERTS ;i++){
+    for(int i=1; i<=N_VERTS ;i++){
         nWorkers[i] = 0;
         taskDuration[i] = 0;
         degreeIn[i] = 0;
         visited[i] = 0;
         ES[i] = 0;
         EF[i] = 0;
+        degreeOut[i] = 0;
     }
 }
+
+void findLF(){
+    
+    int degreeOutCopy[MAX_N_VERTS];
+    copy(begin(degreeOut), end(degreeOut), begin(degreeOutCopy));
+    queue<int>qu;
+    map<int,int>::iterator it;
+    int tmp;
+
+    for(int i=1; i<= N_VERTS ;i++){
+        LF[i] = durMin;      
+    }
+    for(int i=1; i<=N_VERTS ;i++){
+        if(degreeOutCopy[i] == 0){
+
+            qu.push(i);
+        }
+    }
+  
+    while(!qu.empty()){
+        tmp = qu.front();
+        qu.pop();
+        for(it=graphT[tmp].begin();it!=graphT[tmp].end();it++){
+            if(LF[it->first] > LF[tmp] - taskDuration[it->first]){
+                LF[it->first] = LF[tmp] - taskDuration[it->first];
+            }
+            degreeOutCopy[it->first]--;
+            if(degreeOutCopy[it->first] == 0) qu.push(it->first);
+        }
+    }
+
+}
+
 void findEF(){
-    for(int i = 0; i<N_VERTS;i++){
+    for(int i = 1; i<=N_VERTS;i++){
         EF[i] = ES[i] + taskDuration[i];
     }
 }
@@ -130,10 +177,10 @@ void findES(){
     map<int,int>::iterator it;
     int durMin = -1;
     int corr = 0;
-    int degreeInCopy[N_VERTS];
+    int degreeInCopy[MAX_N_VERTS];
     copy(begin(degreeIn), end(degreeIn), begin(degreeInCopy));
 
-    for(int i=0; i<N_VERTS;i++){
+    for(int i=1; i<=N_VERTS;i++){
         if(degreeInCopy[i] == 0){
             q.push(i);
         }
@@ -161,8 +208,8 @@ void findES(){
 
 }
 
-void minWorkersWithES(){
-    // we assume that the tasks ID's are integers between 0 and N_VERTS and all of the numbers
+int minWorkersWithES(){
+    // we assume that the tasks ID's are integers between 1 and N_VERTS and all of the numbers
     //inu the interval are tasks id for one task
     int delta = -1;
     int newDelta = 0;
@@ -172,8 +219,7 @@ void minWorkersWithES(){
 
     int size;
     
-
-     for(int i=0; i<N_VERTS;i++){
+     for(int i=1; i<=N_VERTS;i++){
          if(degreeIn[i] == 0){
              currentTasks.push_back(i);
              visited[i] = 1;
@@ -185,10 +231,19 @@ void minWorkersWithES(){
         for(int i=0; i<currentTasks.size() ;i++){
             if(EF[currentTasks[i]] < firstToFinish) firstToFinish = EF[currentTasks[i]];
         }
+        // calculate nWorkers 
+        newDelta = 0;
+        for(int i=0;i<currentTasks.size();i++){
+            newDelta += nWorkers[currentTasks[i]]; 
+        }
+        if(delta < newDelta){
+            delta = newDelta;
+        }
+
         size = currentTasks.size();
         for(int i=0; i<size ;i++){
             if(EF[currentTasks[i]] == firstToFinish){
-                // verificar quais filhos tem ES = firstToFinish, calcular delta, atualizar lista
+                // verificar quais filhos tem ES = firstToFinish, atualizar lista
                 for(it=graph[currentTasks[i]].begin();it!=graph[currentTasks[i]].end();it++){
                     if(!visited[it->first] && (ES[it->first] == firstToFinish)){
                         visited[it->first] = 1;
@@ -199,36 +254,34 @@ void minWorkersWithES(){
                 currentTasks.erase(currentTasks.begin()+i);
                 size = size-1;
                 i--;
+                
             }   
-        }
-        newDelta = 0;
-        for(int i=0;i<currentTasks.size();i++){
-            newDelta += nWorkers[currentTasks[i]];
-            
-        }
-    
-        if(delta < newDelta){
-            delta = newDelta;
-        }
+        } 
+       
     }
-
-
-    cout << "Min Number of workers: "<< delta << endl;
+    
+    return delta;
 
 }
 
 int main (){
-    int durMin;
+
     resetDataStructures();
     readData();
-
-
-    findES();
+    findES(); 
     findEF();
     
     durMin = MinimalDuration();
-    minWorkersWithES(); 
-    cout << "Duração Mínima: "<< durMin << endl;
+    findLF(); // uses durMin (needs to be after MinimalDuration)
+    for(int i=1; i<= N_VERTS;i++){
+        cout << "LF[" << i << "]: " << LF[i] << endl;
+        cout << "EF[" << i << "]: " << EF[i] << endl;
+        cout << "ES[" << i << "]: " << ES[i] << endl; 
+    }
+    cout << "Duração mínima do projeto: "<< durMin << endl;
+    minWorkers = minWorkersWithES(); 
+    cout << "Número mínimo de trabalhadores com ES's fixados: "<< minWorkers << endl;
+    
 
 
     return 0;
