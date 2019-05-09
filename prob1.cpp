@@ -18,7 +18,8 @@ int visited[MAX_N_VERTS];
 int ES[MAX_N_VERTS];
 int EF[MAX_N_VERTS];
 int LF[MAX_N_VERTS];
-int durMin, minWorkers;
+int LS[MAX_N_VERTS];
+int durMin, minW;
 
 size_t first,last;
 map <int,int>graph[MAX_N_VERTS];
@@ -38,6 +39,11 @@ int MinimalDuration(){
     return f;
 }
 
+void findLS(){
+    for(int i = 1 ;i <=N_VERTS;i++){
+        LS[i] = LF[i] - taskDuration[i];
+    }
+}
 void getTaskNeighbours(int id){
         // get nodes from the remaining of the line :  tarefa([int1, int2], duration,workers)
         int node;
@@ -71,9 +77,6 @@ void getTaskNeighbours(int id){
             degreeOut[id]++;
            
         }
-        
-
-    
        
 }
 
@@ -207,9 +210,8 @@ void findES(){
 
 }
 
-int minWorkersWithES(){
-    // we assume that the tasks ID's are integers between 1 and N_VERTS and all of the numbers
-    //inu the interval are tasks id for one task
+
+int minWorkers(vector<int>nodes){
     int delta = -1;
     int newDelta = 0;
     int firstToFinish;
@@ -218,10 +220,10 @@ int minWorkersWithES(){
 
     int size;
     
-     for(int i=1; i<=N_VERTS;i++){
-         if(degreeIn[i] == 0){
-             currentTasks.push_back(i);
-             visited[i] = 1;
+     for(int i=0; i<nodes.size();i++){
+         if(degreeIn[nodes[i]] == 0){
+             currentTasks.push_back(nodes[i]);
+             visited[nodes[i]] = 1;
          }
      }
 
@@ -263,8 +265,21 @@ int minWorkersWithES(){
 
 }
 
+int minWorkersCritical(){
+    vector<int>nodes;
+    int ret;
+    for(int i=1;i<=N_VERTS;i++){
+        if(LS[i] == ES[i]){
+            nodes.push_back(i);
+        }
+    }
+    return minWorkers(nodes);
+}
+
 int main (){
 
+    int minWCri;
+    vector<int> allTasks;
     resetDataStructures();
     readData();
     findES(); 
@@ -272,14 +287,21 @@ int main (){
     
     durMin = MinimalDuration();
     findLF(); // uses durMin (needs to be after MinimalDuration)
+    findLS();
     for(int i=1; i<= N_VERTS;i++){
+        allTasks.push_back(i);
         cout << "LF[" << i << "]: " << LF[i] << endl;
+        cout << "LS[" << i << "]: " << LS[i] << endl;
         cout << "EF[" << i << "]: " << EF[i] << endl;
-        cout << "ES[" << i << "]: " << ES[i] << endl; 
+        cout << "ES[" << i << "]: " << ES[i] << endl;
+          
+
     }
     cout << "Duração mínima do projeto: "<< durMin << endl;
-    minWorkers = minWorkersWithES(); 
-    cout << "Número mínimo de trabalhadores com ES's fixados: "<< minWorkers << endl;
+    minW = minWorkers(allTasks); 
+    cout << "Número mínimo de trabalhadores com ES's fixados: "<< minW << endl;
+    minWCri= minWorkersCritical();
+    cout << "Número mínimo de trabalhadores para atividades críticas: "<< minWCri << endl;
     
 
 
