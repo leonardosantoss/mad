@@ -149,7 +149,6 @@ void findLF(){
     }
     for(int i=1; i<=N_VERTS ;i++){
         if(degreeOutCopy[i] == 0){
-
             qu.push(i);
         }
     }
@@ -158,8 +157,8 @@ void findLF(){
         tmp = qu.front();
         qu.pop();
         for(it=graphT[tmp].begin();it!=graphT[tmp].end();it++){
-            if(LF[it->first] > LF[tmp] - taskDuration[it->first]){
-                LF[it->first] = LF[tmp] - taskDuration[it->first];
+            if(LF[it->first] > LF[tmp] - taskDuration[tmp]){
+                LF[it->first] = LF[tmp] - taskDuration[tmp];
             }
             degreeOutCopy[it->first]--;
             if(degreeOutCopy[it->first] == 0) qu.push(it->first);
