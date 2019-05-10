@@ -52,7 +52,7 @@ prec_constrs([I|Tars], ES, LF, Concl):-
     ESi + Di #=< Concl,
     prec_constrs(Tars, ES, LF, Concl).
 
-get_LF([], _,LFi,LFi).
+get_LF([], _,_,_).
 get_LF([J|RT], LF, LFi, Concl):-
     element(J, LF, LFj),
     tarefa(J, _, Dj, _),
