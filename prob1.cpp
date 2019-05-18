@@ -10,6 +10,8 @@
 #include <utility>  
  
 #define MAX_N_VERTS 1000
+#define CASE_CRIT 1
+#define CASE_ALL_TASKS 2
 using namespace std;
 
 int nWorkers[MAX_N_VERTS];
@@ -25,7 +27,6 @@ int piEF[MAX_N_VERTS]; //processing time of the free part) for each activity pi 
 int piTT[MAX_N_VERTS]; //Fixed part of an activity i (length of its compulsory part , max(0 , EF[i] - LS[i]))
 int eiEF[MAX_N_VERTS]; // free energy 
 int eiTT[MAX_N_VERTS]; // fixed energy
-double *ttAfter;
 int durMin, minW;
 
 size_t first,last;
@@ -218,7 +219,7 @@ void findES(){
 }
 
 
-int minWorkers(vector<int>nodes, bool flag){  // flag true for critical, false for allTasks
+int minWorkers(vector<int>nodes, int cases){  // flag true for critical, false for allTasks
     int delta = -1;
     int newDelta = 0;
     int firstToFinish;
@@ -254,17 +255,19 @@ int minWorkers(vector<int>nodes, bool flag){  // flag true for critical, false f
                 // verificar quais filhos tem ES = firstToFinish, atualizar lista
                 for(it=graph[currentTasks[i]].begin();it!=graph[currentTasks[i]].end();it++){
                     if(!visited[it->first] && (ES[it->first] == firstToFinish)){
-                        if(flag){
+                        switch (cases){
+                        case CASE_CRIT:
                             if(ES[it->first] == LS[it->first]){
                                 visited[it->first] = 1;
                                 currentTasks.push_back(it->first);
                             }
-                        }
-                        else{
+                            break;
+                        case CASE_ALL_TASKS:
                             visited[it->first] = 1;
-                            currentTasks.push_back(it->first);
+                            currentTasks.push_back(it->first); 
+                        default:
+                            break;
                         }
-                        
                     }
                 }
                 // tirar currentTasks[i] de currentTasks
@@ -290,7 +293,7 @@ int minWorkersCritical(){
             nodes.push_back(i);
         }
     }
-    return minWorkers(nodes, true);
+    return minWorkers(nodes, CASE_CRIT);
 }
 /*  
 
@@ -336,8 +339,8 @@ it updates the minimum available energy and examines the next task interval:
         if(avail < minAvail) minAvail = avail;
 */
 
- /*
-bool checkIfNWorkersPossible(int possibleWorkers, vector<pair<int,int> > sortedActivitiesByES, vector <pair<int,int> > sortedActivitiesByLF){
+ 
+bool checkIfNWorkersPossible(int possibleWorkers, vector<pair<int,int> > sortedActivitiesByES, vector <pair<int,int> > sortedActivitiesByLF, double* ttAfter){
     double end = std::numeric_limits<double>::infinity();
     double minAvail = std::numeric_limits<double>::infinity();
     double avail;
@@ -367,7 +370,7 @@ bool checkIfNWorkersPossible(int possibleWorkers, vector<pair<int,int> > sortedA
             else if(LF[tmpES] - piEF[tmpES] < end){
              
                 E = E + nWorkers[tmpES]*(end-(LF[tmpES]- piEF[tmpES]));
-                avail = possibleWorkers*(end-inicio)-E-(ttAfter[ES[tmpES]]-ttAfter[LF[tmpLF]]);
+                avail = (possibleWorkers*(end-inicio)) - E - (ttAfter[ES[tmpES]]-ttAfter[LF[tmpLF]]);
             }
             if(avail < 0){
                 return false;
@@ -378,13 +381,14 @@ bool checkIfNWorkersPossible(int possibleWorkers, vector<pair<int,int> > sortedA
     }
     return true;
 }
- */
+ 
 int main (){
 
     int minWCri;
     vector<int> allTasks;
     vector<pair<int,int> > sortedActivitiesByES; // ES, index of activity
     vector<pair<int,int> > sortedActivitiesByLF; // LF, index of activity
+    double *ttAfter;
     
 
     resetDataStructures();
@@ -408,7 +412,7 @@ int main (){
 
     }
     cout << "Duração mínima do projeto: "<< durMin << endl;
-    minW = minWorkers(allTasks, false); 
+    minW = minWorkers(allTasks, CASE_ALL_TASKS); 
     cout << "Número mínimo de trabalhadores com ES's fixados: "<< minW << endl;
     minWCri = minWorkersCritical();
     cout << "Número mínimo de trabalhadores para atividades críticas: "<< minWCri << endl;
@@ -426,7 +430,7 @@ int main (){
      // calculate eiEF where free energy of eiEF i = ei - eiTT
     // where eiTT = ri * piTT
 
-    /*
+    
     for(int i=1; i<= N_VERTS;i++){
         piTT[i] = max(0, EF[i]-LS[i]);
         piEF[i] = taskDuration[i] - piTT[i];
@@ -434,30 +438,31 @@ int main (){
         eiEF[i] = (nWorkers[i] * taskDuration[i]) - eiTT[i];
     }
 
-    */
-    /*ttAfter = (double *)malloc(durMin+2*sizeof(double));
+    ttAfter = (double *)malloc((durMin+2)*sizeof(double));
     // calculate ttAfter
-    for(int i = 0; i < durMin+1; i++){
-        for(int j = i; j<durMin+1;j++){
-            
+
+    for(int i = 0; i<=durMin;i++){
+        ttAfter[i] = 0;
+    }
+    for(int i = 0; i<= durMin; i++){
+        for(int j = i; j<=durMin;j++){
             for(int k = 1; k<=N_VERTS;k++){
                 if(j >= LS[k] && j < EF[k]){
-                    ttAfter[k] += nWorkers[k];
+                    ttAfter[i] += nWorkers[k];
                 }
             }
         }
     }
-    *//*
     for(int possibleNWorkers = minWCri; possibleNWorkers<= minW; possibleNWorkers++){
         
-       if(checkIfNWorkersPossible(possibleNWorkers,sortedActivitiesByES,sortedActivitiesByLF)){
+       if(checkIfNWorkersPossible(possibleNWorkers,sortedActivitiesByES,sortedActivitiesByLF, ttAfter)){
             cout << "Número mínimo de trabalhadores sem ES's fixados: " << possibleNWorkers << endl;
             break;
         }
         
     }
     
-    */
+    
 
     return 0;
 }
