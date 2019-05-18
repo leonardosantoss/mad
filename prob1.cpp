@@ -1,11 +1,13 @@
 #include <stdio.h>
-#include <stdio.h>
 #include <iostream>
 #include <algorithm>
 #include <map>
 #include <vector>
 #include <fstream>
 #include <queue>
+#include <limits>
+#include <iterator>
+#include <utility>  
  
 #define MAX_N_VERTS 1000
 using namespace std;
@@ -275,11 +277,67 @@ int minWorkersCritical(){
     }
     return minWorkers(nodes);
 }
+/*  
+    The consistency check is one part of TtEf propagation that checks whether
+there is a resource overload in any task interval.
 
+The cumulative resource scheduling problem is inconsistent if
+R · (lctb − esta) − energy(a, b) < 0
+
+by iterating over the end times in decreasing order we can calculate the minimal available
+free energy minAvail from the previous iteration. If the reduction in this free
+energy for the next iteration cannot make it negative we know that none of the
+task intervals in this iteration can lead to resource overload, and we can skip
+the entire set of task intervals
+
+
+
+
+Activity i is specified by its start time Si, its processing time pi, its resource usage ri,
+and its energy ei:= pi*ri
+
+
+bool checkIfNWorkersPossible(int nWorkers, vector<pair<int,int> > sortedActivitiesByES, vector <pair<int,int> > sortedActivitiesByLF){
+    double end = std::numeric_limits<double>::infinity();
+    double minAvail = std::numeric_limits<double>::infinity();
+    int tmpLF, E,tmpES;
+    for(int y = N_VERTS-1; i>=0;i--){
+        tmpLF = sortedActivitiesByLF[y];
+        if(LF[tmpLF] == end) continue;
+        if(end != numeric_limits<double>::infinity() 
+        && minAvail != numeric_limits<double>::infinity() 
+        &&  minAvail >= nWorkers * (end-LF[tmpLF]) - ttAfter[LF[tmpLF]] + ttAfter[end]) continue;
+        end = LF[tmpLF];
+        E = 0;
+        minAvail = std::numeric_limits<double>::infinity();
+        for(int x = N_VERTS-1;i>=0;i++){
+            tmpES = sortedActivitiesByES[x];
+            if(end <= ES[tmpES]) continue;
+            inicio = ES[tmpES];
+            if(LF[tmpES] <= end ){
+                E = E + eiEF[tmpES];
+            }
+            else if(LF[tmpES] - piEF[tmpES] < end){
+                E = E + ri[tmpES]*(end-(LF[tmpES - piEF[tmpES]]));
+                avail = nWorkers*(end-inicio)-E-(ttAfter[ES[tmpES]]-ttAfter[LF[tmpLF]]);
+            }
+            if(avail < 0){
+                return false;
+            }
+            if(avail < minAvail) minAvail = avail;
+        }
+    }
+    return true;
+}
+*/
 int main (){
 
     int minWCri;
     vector<int> allTasks;
+    vector<pair<int,int> > sortedActivitiesByES; // ES, index of activity
+    vector<pair<int,int> > sortedActivitiesByLF; // LF, index of activity
+    
+
     resetDataStructures();
     readData();
     findES(); 
@@ -290,10 +348,10 @@ int main (){
     findLS();
     for(int i=1; i<= N_VERTS;i++){
         allTasks.push_back(i);
-        cout << "LF[" << i << "]: " << LF[i] << endl;
-        cout << "LS[" << i << "]: " << LS[i] << endl;
-        cout << "EF[" << i << "]: " << EF[i] << endl;
-        cout << "ES[" << i << "]: " << ES[i] << endl;
+        cout << "LF[" << i << "]: " << LF[i];
+        cout << "| LS[" << i << "]: " << LS[i];
+        cout << "| EF[" << i << "]: " << EF[i];
+        cout << "| ES[" << i << "]: " << ES[i] << endl;
           
 
     }
@@ -302,6 +360,21 @@ int main (){
     cout << "Número mínimo de trabalhadores com ES's fixados: "<< minW << endl;
     minWCri= minWorkersCritical();
     cout << "Número mínimo de trabalhadores para atividades críticas: "<< minWCri << endl;
+
+    for(int i = 1;i <= N_VERTS;i++){
+        sortedActivitiesByES.push_back(make_pair(ES[i], i));
+        sortedActivitiesByLF.push_back(make_pair(LF[i], i));
+    }
+    sort(sortedActivitiesByES.begin(),sortedActivitiesByES.end());
+    sort(sortedActivitiesByLF.begin(),sortedActivitiesByLF.end());
+   
+    for(int possibleNWorkers = minWCri; possibleNWorkers<= minW; possibleNWorkers++){
+       /* if(checkIfNWorkersPossible(possibleNWorkers,sortedActivitiesByES,sortedActivitiesByLF)){
+            cout << "Número mínimo de trabalhadores sem ES's fixados: " << possibleNWorkers << endl;
+            break;
+        }
+        */
+    }
     
 
 
