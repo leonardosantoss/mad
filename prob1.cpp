@@ -19,10 +19,10 @@ int taskDuration[MAX_N_VERTS];
 int degreeIn[MAX_N_VERTS];
 int degreeOut[MAX_N_VERTS];
 int visited[MAX_N_VERTS];
-int ES[MAX_N_VERTS];
-int EF[MAX_N_VERTS];
-int LF[MAX_N_VERTS];
-int LS[MAX_N_VERTS];
+int ES[MAX_N_VERTS];    //earliest start
+int EF[MAX_N_VERTS];  //earliest finish
+int LF[MAX_N_VERTS]; // latest finish
+int LS[MAX_N_VERTS]; // latest start
 int piEF[MAX_N_VERTS]; //processing time of the free part) for each activity pi - piTT
 int piTT[MAX_N_VERTS]; //Fixed part of an activity i (length of its compulsory part , max(0 , EF[i] - LS[i]))
 int eiEF[MAX_N_VERTS]; // free energy 
@@ -39,19 +39,7 @@ ifstream myfile ("data.txt");
 
 int N_VERTS = 0;
 
-int MinimalDuration(){
-    int f=-1;
-    for(int i=1;i<=N_VERTS;i++){
-        if(EF[i] > f) f = EF[i];
-    }
-    return f;
-}
 
-void findLS(){
-    for(int i = 1 ;i <=N_VERTS;i++){
-        LS[i] = LF[i] - taskDuration[i];
-    }
-}
 void getTaskNeighbours(int id){
         // get nodes from the remaining of the line :  tarefa([int1, int2], duration,workers)
         int node;
@@ -183,6 +171,7 @@ void findEF(){
         EF[i] = ES[i] + taskDuration[i];
     }
 }
+
 void findES(){
     map<int,int>::iterator it;
     int durMin = -1;
@@ -204,6 +193,8 @@ void findES(){
         if(durMin < ES[tmp]){
             durMin = ES[tmp];
         }
+        // for each child checks if ES[child] < ES[father] + duration[father]
+        //if so, updates ES[child]
         for(it=graph[tmp].begin();it!=graph[tmp].end();it++){
             if(ES[it->first] < ES[tmp] + taskDuration[tmp]){
                 ES[it->first] = ES[tmp] + taskDuration[tmp];
@@ -218,8 +209,25 @@ void findES(){
 
 }
 
+// returns the maximum of all earliest finishes = minimal duration
+// assumes that ES is already available
+int MinimalDuration(){
+    int f=-1;
+    for(int i=1;i<=N_VERTS;i++){
+        if(EF[i] > f) f = EF[i];
+    }
+    return f;
+}
 
-int minWorkers(vector<int>nodes, int cases){  // flag true for critical, false for allTasks
+void findLS(){
+    for(int i = 1 ;i <=N_VERTS;i++){
+        LS[i] = LF[i] - taskDuration[i];
+    }
+}
+
+// CASE_CRIT for when we only look for critical tasks
+// CASE_ALL_TASKS for when we look for all tasks, with no restrictions
+int minWorkers(vector<int>nodes, int cases){ 
     int delta = -1;
     int newDelta = 0;
     int firstToFinish;
@@ -283,6 +291,7 @@ int minWorkers(vector<int>nodes, int cases){  // flag true for critical, false f
 
 }
 
+//pushes only critical tasks to the vector nodes
 int minWorkersCritical(){
     vector<int>nodes;
     for(int i = 1; i<=N_VERTS;i++){
@@ -382,9 +391,11 @@ bool checkIfNWorkersPossible(int possibleWorkers, vector<pair<int,int> > sortedA
     return true;
 }
 
+// uses brute force approach to discover min possible numbers of workers without fixing any date for the tasks
+// and without making the project finish late
 
 bool bruteForceCheckNWorkers(int n,vector<pair<int,int> >sortedActivitiesByEs, int lowerBound[], int upperBound[], int currentNWorkers[], int minNWorkers){
-    bool flag = false, ans, ret=false;
+    bool stillPossible = false, ret=false;
     int tmpActivity;
     int newLowerBound[MAX_N_VERTS];
     map <int,int>::iterator it;
@@ -392,11 +403,14 @@ bool bruteForceCheckNWorkers(int n,vector<pair<int,int> >sortedActivitiesByEs, i
     if(n == N_VERTS){
         return true;
     }    
-
+    //we first get the activity that has the lower ES
     tmpActivity = sortedActivitiesByEs[n].second;
 
+    // we look at every possible start time for this activity
+    // and check if with this start time its possible to find a solution that
+    // uses no more than minNWorkers workers
     for(int tmpDate=lowerBound[tmpActivity];tmpDate<=upperBound[tmpActivity];tmpDate++){
-        
+        stillPossible = true;
         for(int k=1;k<=N_VERTS;k++){
             newLowerBound[k] = lowerBound[k];
         }
@@ -405,24 +419,26 @@ bool bruteForceCheckNWorkers(int n,vector<pair<int,int> >sortedActivitiesByEs, i
         for(it=graph[tmpActivity].begin();it!=graph[tmpActivity].end();it++){
             newLowerBound[it->first] = max(newLowerBound[it->first], tmpDate+taskDuration[tmpActivity]);
         }
-        flag = true;
+        // update number of workers used for each interval that this activity occurs
         for (int j= tmpDate; j < tmpDate+taskDuration[tmpActivity]; j++){
             currentNWorkers[j] += nWorkers[tmpActivity];
+            //if we get more workers than the bound we set earlier, we know that
+            //the start time we set for the activity is not valid
             if(currentNWorkers[j] > minNWorkers){
-                flag = false;
+                stillPossible = false;
             }    
         }
         
 
-        if(flag){
-            ans = bruteForceCheckNWorkers(n+1, sortedActivitiesByEs, newLowerBound, upperBound, currentNWorkers, minNWorkers);
-
-            if(ans){
+        if(stillPossible){
+            // recursive for the next task
+            if(bruteForceCheckNWorkers(n+1, sortedActivitiesByEs, newLowerBound, upperBound, currentNWorkers, minNWorkers)){
                 ret = true;
             }
         }
         
         // erase workers
+        //so we are to check with different start times
         for (int j= tmpDate; j < tmpDate+taskDuration[tmpActivity]; j++){
             currentNWorkers[j] -= nWorkers[tmpActivity];
         }
