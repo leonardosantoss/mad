@@ -27,6 +27,8 @@ int piEF[MAX_N_VERTS]; //processing time of the free part) for each activity pi 
 int piTT[MAX_N_VERTS]; //Fixed part of an activity i (length of its compulsory part , max(0 , EF[i] - LS[i]))
 int eiEF[MAX_N_VERTS]; // free energy 
 int eiTT[MAX_N_VERTS]; // fixed energy
+int currentNWorkers[MAX_N_VERTS];
+int startDates[MAX_N_VERTS];
 int durMin, minW;
 
 size_t first,last;
@@ -132,6 +134,7 @@ void resetDataStructures(){
         ES[i] = 0;
         EF[i] = 0;
         degreeOut[i] = 0;
+        startDates[i] = 0;
     }
 }
 
@@ -394,17 +397,18 @@ bool checkIfNWorkersPossible(int possibleWorkers, vector<pair<int,int> > sortedA
 // uses brute force approach to discover min possible numbers of workers without fixing any date for the tasks
 // and without making the project finish late
 
-bool bruteForceCheckNWorkers(int n,vector<pair<int,int> >sortedActivitiesByEs, int lowerBound[], int upperBound[], int currentNWorkers[], int minNWorkers){
+bool bruteForceCheckNWorkers(int n,vector<pair<int,int> >sortedActivitiesByLSminusES, int lowerBound[], int upperBound[],int minNWorkers){
     bool stillPossible = false, ret=false;
     int tmpActivity;
     int newLowerBound[MAX_N_VERTS];
+    int newUpperBound[MAX_N_VERTS];
     map <int,int>::iterator it;
 
     if(n == N_VERTS){
         return true;
     }    
     //we first get the activity that has the lower ES
-    tmpActivity = sortedActivitiesByEs[n].second;
+    tmpActivity = sortedActivitiesByLSminusES[n].second;
 
     // we look at every possible start time for this activity
     // and check if with this start time its possible to find a solution that
@@ -413,11 +417,17 @@ bool bruteForceCheckNWorkers(int n,vector<pair<int,int> >sortedActivitiesByEs, i
         stillPossible = true;
         for(int k=1;k<=N_VERTS;k++){
             newLowerBound[k] = lowerBound[k];
+            newUpperBound[k] = upperBound[k];
         }
         
         // new date for a task, must update start times for all children
         for(it=graph[tmpActivity].begin();it!=graph[tmpActivity].end();it++){
             newLowerBound[it->first] = max(newLowerBound[it->first], tmpDate+taskDuration[tmpActivity]);
+        }
+
+        // in transposto graph update neighbours
+        for(it=graphT[tmpActivity].begin();it!=graphT[tmpActivity].end();it++){
+            newUpperBound[it->first] = min(newUpperBound[it->first], tmpDate-taskDuration[it->first]);
         }
         // update number of workers used for each interval that this activity occurs
         for (int j= tmpDate; j < tmpDate+taskDuration[tmpActivity]; j++){
@@ -432,11 +442,12 @@ bool bruteForceCheckNWorkers(int n,vector<pair<int,int> >sortedActivitiesByEs, i
 
         if(stillPossible){
             // recursive for the next task
-            if(bruteForceCheckNWorkers(n+1, sortedActivitiesByEs, newLowerBound, upperBound, currentNWorkers, minNWorkers)){
-                ret = true;
+            if(bruteForceCheckNWorkers(n+1, sortedActivitiesByLSminusES, newLowerBound, newUpperBound,minNWorkers)){
+                startDates[tmpActivity] = tmpDate;
+                return true;
+                //ret = true;
             }
         }
-        
         // erase workers
         //so we are to check with different start times
         for (int j= tmpDate; j < tmpDate+taskDuration[tmpActivity]; j++){
@@ -453,9 +464,9 @@ int main (){
     vector<int> allTasks;
     vector<pair<int,int> > sortedActivitiesByES; // ES, index of activity
     vector<pair<int,int> > sortedActivitiesByLF; // LF, index of activity
+    vector<pair<int,int> > sortedActivitiesByLSminusES;
     double *ttAfter;
-    bool res = false;
-    int currentNWorkers[MAX_N_VERTS];    
+    bool res = false;  
 
     resetDataStructures();
     readData();
@@ -486,9 +497,11 @@ int main (){
     for(int i = 1;i <= N_VERTS;i++){
         sortedActivitiesByES.push_back(make_pair(ES[i], i));
         sortedActivitiesByLF.push_back(make_pair(LF[i], i));
+        sortedActivitiesByLSminusES.push_back(make_pair(LS[i]-ES[i], i));
     }
     sort(sortedActivitiesByES.begin(),sortedActivitiesByES.end());
     sort(sortedActivitiesByLF.begin(),sortedActivitiesByLF.end());
+    sort(sortedActivitiesByLSminusES.begin(),sortedActivitiesByLSminusES.end());
 
     // calculate piEF (processing time of the free part) for each activity pi - piTT, 
     // where piTT = Fixed part of an activity i (length of its compulsory part , max(0 , EF[i] - LS[i]))
@@ -535,11 +548,17 @@ int main (){
         }
         */
     
-       if(bruteForceCheckNWorkers(0,sortedActivitiesByES, ES, LS, currentNWorkers , possibleNWorkers)){
+       if(bruteForceCheckNWorkers(0,sortedActivitiesByLSminusES, ES, LS, possibleNWorkers)){
             cout << "Número mínimo de trabalhadores sem ES's fixados: " << possibleNWorkers << endl;
             break;
        }
     }
+
+    cout << "Datas de início para as tarefas: ";
+    for(int i=1; i<=N_VERTS-1 ;i++){
+        cout << "["<< i << "]: " << startDates[i] << " | ";
+    }
+    cout << "[" << N_VERTS << "]" << ": " << startDates[N_VERTS] << endl;
     
     
 
