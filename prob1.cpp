@@ -382,7 +382,7 @@ bool checkIfNWorkersPossible(int possibleWorkers, vector<pair<int,int> > sortedA
     return true;
 }
 
-//ii, datas, worker_min, lb, ub, curr_trab
+
 bool bruteForceCheckNWorkers(int n,vector<pair<int,int> >sortedActivitiesByEs, int lowerBound[], int upperBound[], int currentNWorkers[], int minNWorkers){
     bool flag = false, ans, ret=false;
     int tmpActivity;
@@ -419,8 +419,6 @@ bool bruteForceCheckNWorkers(int n,vector<pair<int,int> >sortedActivitiesByEs, i
 
             if(ans){
                 ret = true;
-                // wes[tmpActivity] = min(wes[tmpActivity], tmpDate);
-                // wls[tmpActivity] = max(wls[tmpActivity], tmpDate);
             }
         }
         
