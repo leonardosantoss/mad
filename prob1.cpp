@@ -381,6 +381,57 @@ bool checkIfNWorkersPossible(int possibleWorkers, vector<pair<int,int> > sortedA
     }
     return true;
 }
+
+//ii, datas, worker_min, lb, ub, curr_trab
+bool bruteForceCheckNWorkers(int n,vector<pair<int,int> >sortedActivitiesByEs, int lowerBound[], int upperBound[], int currentNWorkers[], int minNWorkers){
+    bool flag = false, ans, ret=false;
+    int tmpActivity;
+    int newLowerBound[MAX_N_VERTS];
+    map <int,int>::iterator it;
+
+    if(n == N_VERTS){
+        return true;
+    }    
+
+    tmpActivity = sortedActivitiesByEs[n].second;
+
+    for(int tmpDate=lowerBound[tmpActivity];tmpDate<=upperBound[tmpActivity];tmpDate++){
+        
+        for(int k=1;k<=N_VERTS;k++){
+            newLowerBound[k] = lowerBound[k];
+        }
+        
+        // new date for a task, must update start times for all children
+        for(it=graph[tmpActivity].begin();it!=graph[tmpActivity].end();it++){
+            newLowerBound[it->first] = max(newLowerBound[it->first], tmpDate+taskDuration[tmpActivity]);
+        }
+        flag = true;
+        for (int j= tmpDate; j < tmpDate+taskDuration[tmpActivity]; j++){
+            currentNWorkers[j] += nWorkers[tmpActivity];
+            if(currentNWorkers[j] > minNWorkers){
+                flag = false;
+            }    
+        }
+        
+
+        if(flag){
+            ans = bruteForceCheckNWorkers(n+1, sortedActivitiesByEs, newLowerBound, upperBound, currentNWorkers, minNWorkers);
+
+            if(ans){
+                ret = true;
+                // wes[tmpActivity] = min(wes[tmpActivity], tmpDate);
+                // wls[tmpActivity] = max(wls[tmpActivity], tmpDate);
+            }
+        }
+        
+        // erase workers
+        for (int j= tmpDate; j < tmpDate+taskDuration[tmpActivity]; j++){
+            currentNWorkers[j] -= nWorkers[tmpActivity];
+        }
+        
+    }
+    return ret;
+}
  
 int main (){
 
@@ -389,7 +440,8 @@ int main (){
     vector<pair<int,int> > sortedActivitiesByES; // ES, index of activity
     vector<pair<int,int> > sortedActivitiesByLF; // LF, index of activity
     double *ttAfter;
-    
+    bool res = false;
+    int currentNWorkers[MAX_N_VERTS];    
 
     resetDataStructures();
     readData();
@@ -429,7 +481,7 @@ int main (){
     
      // calculate eiEF where free energy of eiEF i = ei - eiTT
     // where eiTT = ri * piTT
-
+/*
     
     for(int i=1; i<= N_VERTS;i++){
         piTT[i] = max(0, EF[i]-LS[i]);
@@ -437,13 +489,16 @@ int main (){
         eiTT[i] = nWorkers[i] * piTT[i];
         eiEF[i] = (nWorkers[i] * taskDuration[i]) - eiTT[i];
     }
-
+*/
     ttAfter = (double *)malloc((durMin+2)*sizeof(double));
     // calculate ttAfter
-
+    
     for(int i = 0; i<=durMin;i++){
         ttAfter[i] = 0;
+        currentNWorkers[i] = 0;
     }
+    
+   /*
     for(int i = 0; i<= durMin; i++){
         for(int j = i; j<=durMin;j++){
             for(int k = 1; k<=N_VERTS;k++){
@@ -452,14 +507,24 @@ int main (){
                 }
             }
         }
-    }
-    for(int possibleNWorkers = minWCri; possibleNWorkers<= minW; possibleNWorkers++){
         
+    }
+
+   */ 
+
+    
+    for(int possibleNWorkers = minWCri; possibleNWorkers<= minW; possibleNWorkers++){
+        /*
        if(checkIfNWorkersPossible(possibleNWorkers,sortedActivitiesByES,sortedActivitiesByLF, ttAfter)){
             cout << "Número mínimo de trabalhadores sem ES's fixados: " << possibleNWorkers << endl;
             break;
         }
-        
+        */
+    
+       if(bruteForceCheckNWorkers(0,sortedActivitiesByES, ES, LS, currentNWorkers , possibleNWorkers)){
+            cout << "Número mínimo de trabalhadores sem ES's fixados: " << possibleNWorkers << endl;
+            break;
+       }
     }
     
     
