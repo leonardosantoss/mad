@@ -2,13 +2,11 @@
 :- lib(ic_global).
 :- lib(branch_and_bound).
 
-:- compile(data).
-
 go(Dados) :- compile(Dados), obter_dados(Tarefas, Intervalos, Trabalhadores), 
 length(Tarefas, N),
 length(HorasDeInicio, N),
 length(DatasDeInicio, N),
-prazo(d[Prazo,_,_]),  %% assumindo que prazo é um dia e ignorando completamente que existem meses
+prazo(d(Prazo,_,_)),  %% assumindo que prazo é um dia e ignorando completamente que existem meses
 datadeinicio_constrs(Tarefas, DatasDeInicio, Prazo),
 horadeinicio_constrs(Tarefas, DatasDeInicio ,HorasDeInicio).
 
@@ -26,7 +24,7 @@ datadeinicio_constrs([],_,_).
 datadeinicio_constrs([ID|Tars], DatasDeInicio, Prazo) :-
 	element(ID, DatasDeInicio, DataI),
 	DataI :: [1..31],
-	tarefa(ID, Prec,_, _),
+	tarefa(ID,Prec,_,_,_),
 	datadeinicio_constrs_(Prec,DatasDeInicio,DataI),
 	DataI #=< Prazo,
 	datadeinicio_constrs(Tars, DatasDeInicio, Prazo).
@@ -42,7 +40,7 @@ horadeinicio_constrs([],_,_).
 horadeinicio_constrs([ID|Tars], HorasDeInicio, DatasDeInicio) :-
 	element(ID, HorasDeInicio, Hi),
 	element(ID, DatasDeInicio, DataI),
-	tarefa(ID, Prec, Duri, _),
+	tarefa(ID, Prec, Duri,_,_),
 	horadeinicio_constrs_(Prec,HorasDeInicio, DataI ,Hi, Duri),
 	Hi :: [8..12, 13..17],
 	Hi #=< 17,
@@ -53,7 +51,7 @@ horadeinicio_constrs_([],_,_,_).
 horadeinicio_constrs_([P|Precs],HorasDeInicio,DataI,Hi,Duri) :- 
      element(P,HorasDeInicio,Hj),
      element(P,DatasDeInicio,DataJ),
-     %% Datai #=< DataJ,
+     DataI #=< DataJ,
      Hi + Duri #=< (DataJ-DataI) * 24 + Hj, %%ignorando intervalos
      Hi + Duri #=< Hj,
      prec_constrs_(Precs,HorasDeInicio,DataI,Hi,Duri).
