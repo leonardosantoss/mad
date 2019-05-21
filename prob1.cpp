@@ -9,7 +9,7 @@
 #include <iterator>
 #include <utility>  
  
-#define MAX_N_VERTS 1000
+#define MAX_N_VERTS 1500
 #define CASE_CRIT 1
 #define CASE_ALL_TASKS 2
 using namespace std;
@@ -499,8 +499,8 @@ int main (){
         sortedActivitiesByLF.push_back(make_pair(LF[i], i));
         sortedActivitiesByLSminusES.push_back(make_pair(LS[i]-ES[i], i));
     }
-    sort(sortedActivitiesByES.begin(),sortedActivitiesByES.end());
-    sort(sortedActivitiesByLF.begin(),sortedActivitiesByLF.end());
+    //sort(sortedActivitiesByES.begin(),sortedActivitiesByES.end());
+    //sort(sortedActivitiesByLF.begin(),sortedActivitiesByLF.end());
     sort(sortedActivitiesByLSminusES.begin(),sortedActivitiesByLSminusES.end());
 
     // calculate piEF (processing time of the free part) for each activity pi - piTT, 
@@ -517,11 +517,11 @@ int main (){
         eiEF[i] = (nWorkers[i] * taskDuration[i]) - eiTT[i];
     }
 */
-    ttAfter = (double *)malloc((durMin+2)*sizeof(double));
+    //ttAfter = (double *)malloc((durMin+2)*sizeof(double));
     // calculate ttAfter
     
     for(int i = 0; i<=durMin;i++){
-        ttAfter[i] = 0;
+        //ttAfter[i] = 0;
         currentNWorkers[i] = 0;
     }
     
@@ -553,7 +553,7 @@ int main (){
             break;
        }
     }
-
+    
     cout << "Datas de início para as tarefas: ";
     for(int i=1; i<=N_VERTS-1 ;i++){
         cout << "["<< i << "]: " << startDates[i] << " | ";
