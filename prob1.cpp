@@ -23,10 +23,6 @@ int ES[MAX_N_VERTS];    //earliest start
 int EF[MAX_N_VERTS];  //earliest finish
 int LF[MAX_N_VERTS]; // latest finish
 int LS[MAX_N_VERTS]; // latest start
-int piEF[MAX_N_VERTS]; //processing time of the free part) for each activity pi - piTT
-int piTT[MAX_N_VERTS]; //Fixed part of an activity i (length of its compulsory part , max(0 , EF[i] - LS[i]))
-int eiEF[MAX_N_VERTS]; // free energy 
-int eiTT[MAX_N_VERTS]; // fixed energy
 int currentNWorkers[MAX_N_VERTS];
 int startDates[MAX_N_VERTS];
 int durMin, minW;
@@ -307,92 +303,7 @@ int minWorkersCritical(){
     }
     return minWorkers(nodes, CASE_CRIT);
 }
-/*  
-
-Based on the paper "Explaining Time-Table-Edge-Finding Propagation for the Cumulative Resource Constraint" 
-    by Andreas Schutt, Thibaut Feydy, and Peter J. Stuckey
-
-The consistency check is one part of TtEf propagation that checks whether
-there is a resource overload in any task interval.
-The cumulative resource scheduling problem is inconsistent if
-
-    R · (lctb − esta) − energy(a, b) < 0
-
-by iterating over the end times in decreasing order we can calculate the minimal available
-free energy minAvail from the previous iteration. If the reduction in this free
-energy for the next iteration cannot make it negative we know that none of the
-task intervals in this iteration can lead to resource overload, and we can skip
-the entire set of task intervals
-
-Activity i is specified by its start time Si, its processing time pi (duration), its resource usage ri (workers),
-and its energy ei:= pi*ri .
-The algorithm iterates on each end time in decreasing order. For each end
-time the algorithm first checks if no propagation is possible with this end time:
-
-        if(end != numeric_limits<double>::infinity() 
-        && minAvail != numeric_limits<double>::infinity() 
-        &&  minAvail >= nWorkers * (end-LF[tmpLF]) - ttAfter[LF[tmpLF]] + ttAfter[end]) continue;
-
-and if so skips to the next. Otherwise it examines each possible
-start time, updating the free energy used E for the new task interval
-and calculating the energy available avail in the task interval:
-
-         if(LF[tmpES] <= end ){
-            E = E + eiEF[tmpES];
-        }
-        else if(LF[tmpES] - piEF[tmpES] < end){
-            E = E + ri[tmpES]*(end-(LF[tmpES]- piEF[tmpES]));
-            avail = nWorkers*(end-inicio)-E-(ttAfter[ES[tmpES]]-ttAfter[LF[tmpLF]]);
-        }
-
-If this is negative it explains the overload in the interval and returns false. If not
-it updates the minimum available energy and examines the next task interval:
-
-        if(avail < minAvail) minAvail = avail;
-*/
-
  
-bool checkIfNWorkersPossible(int possibleWorkers, vector<pair<int,int> > sortedActivitiesByES, vector <pair<int,int> > sortedActivitiesByLF, double* ttAfter){
-    double end = std::numeric_limits<double>::infinity();
-    double minAvail = std::numeric_limits<double>::infinity();
-    double avail;
-    int tmpLF, E,tmpES, inicio;
-    
-
-
-    for(int y = N_VERTS-1; y>=0;y--){
-        tmpLF = sortedActivitiesByLF[y].second;
-        if(LF[tmpLF] == end) continue;
-        if(end != numeric_limits<double>::infinity() 
-        && minAvail != numeric_limits<double>::infinity() 
-        &&  (minAvail >= (possibleWorkers * (end-LF[tmpLF]) - ttAfter[LF[tmpLF]] + ttAfter[(int) end]))) continue;
-        
-        end = LF[tmpLF];
-        E = 0;
-        minAvail = std::numeric_limits<double>::infinity();
-        for(int x = N_VERTS-1;x>=0;x--){
-           
-            tmpES = sortedActivitiesByES[x].second;
-            if(end <= ES[tmpES]) continue;
-            inicio = ES[tmpES];
-            if(LF[tmpES] <= end ){
-                E = E + eiEF[tmpES];
-                
-            }
-            else if(LF[tmpES] - piEF[tmpES] < end){
-             
-                E = E + nWorkers[tmpES]*(end-(LF[tmpES]- piEF[tmpES]));
-                avail = (possibleWorkers*(end-inicio)) - E - (ttAfter[ES[tmpES]]-ttAfter[LF[tmpLF]]);
-            }
-            if(avail < 0){
-                return false;
-            }
-            if(avail < minAvail) minAvail = avail;
-            
-        }
-    }
-    return true;
-}
 
 // uses brute force approach to discover min possible numbers of workers without fixing any date for the tasks
 // and without making the project finish late
@@ -462,10 +373,7 @@ int main (){
 
     int minWCri;
     vector<int> allTasks;
-    vector<pair<int,int> > sortedActivitiesByES; // ES, index of activity
-    vector<pair<int,int> > sortedActivitiesByLF; // LF, index of activity
-    vector<pair<int,int> > sortedActivitiesByLSminusES;
-    double *ttAfter;
+    vector<pair<int,int> > sortedActivitiesByLSminusES; // LS-ES, index of activity
     bool res = false;  
 
     resetDataStructures();
@@ -495,59 +403,16 @@ int main (){
     cout << "Número mínimo de trabalhadores para atividades críticas: "<< minWCri << endl;
 
     for(int i = 1;i <= N_VERTS;i++){
-        sortedActivitiesByES.push_back(make_pair(ES[i], i));
-        sortedActivitiesByLF.push_back(make_pair(LF[i], i));
         sortedActivitiesByLSminusES.push_back(make_pair(LS[i]-ES[i], i));
     }
-    //sort(sortedActivitiesByES.begin(),sortedActivitiesByES.end());
-    //sort(sortedActivitiesByLF.begin(),sortedActivitiesByLF.end());
+   
     sort(sortedActivitiesByLSminusES.begin(),sortedActivitiesByLSminusES.end());
 
-    // calculate piEF (processing time of the free part) for each activity pi - piTT, 
-    // where piTT = Fixed part of an activity i (length of its compulsory part , max(0 , EF[i] - LS[i]))
-    
-     // calculate eiEF where free energy of eiEF i = ei - eiTT
-    // where eiTT = ri * piTT
-/*
-    
-    for(int i=1; i<= N_VERTS;i++){
-        piTT[i] = max(0, EF[i]-LS[i]);
-        piEF[i] = taskDuration[i] - piTT[i];
-        eiTT[i] = nWorkers[i] * piTT[i];
-        eiEF[i] = (nWorkers[i] * taskDuration[i]) - eiTT[i];
-    }
-*/
-    //ttAfter = (double *)malloc((durMin+2)*sizeof(double));
-    // calculate ttAfter
-    
     for(int i = 0; i<=durMin;i++){
-        //ttAfter[i] = 0;
         currentNWorkers[i] = 0;
     }
     
-   /*
-    for(int i = 0; i<= durMin; i++){
-        for(int j = i; j<=durMin;j++){
-            for(int k = 1; k<=N_VERTS;k++){
-                if(j >= LS[k] && j < EF[k]){
-                    ttAfter[i] += nWorkers[k];
-                }
-            }
-        }
-        
-    }
-
-   */ 
-
-    
     for(int possibleNWorkers = minWCri; possibleNWorkers<= minW; possibleNWorkers++){
-        /*
-       if(checkIfNWorkersPossible(possibleNWorkers,sortedActivitiesByES,sortedActivitiesByLF, ttAfter)){
-            cout << "Número mínimo de trabalhadores sem ES's fixados: " << possibleNWorkers << endl;
-            break;
-        }
-        */
-    
        if(bruteForceCheckNWorkers(0,sortedActivitiesByLSminusES, ES, LS, possibleNWorkers)){
             cout << "Número mínimo de trabalhadores sem ES's fixados: " << possibleNWorkers << endl;
             break;
