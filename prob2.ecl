@@ -11,17 +11,25 @@ go(Dados) :- compile(Dados), obter_dados(Tarefas, IntervalosTo,IntervalosFrom, T
 length(Tarefas, N),
 length(HorasDeInicio, N),
 length(DatasDeInicio, N),
-prazo(d(Prazo,_,_)),  %% assumindo que prazo é um dia e ignorando completamente que existem meses
-calendario(Datas),
-calendario_to_list(Datas, DatasPossiveis),
+prazo(d(DiaPrazo,MesPrazo,_)),  %% assumindo que prazo é um dia e ignorando completamente que existem meses
+calendario(Datas), 
+calendario_to_list(Datas, DatasPossiveis,DiaPrazo, MesPrazo,Prazo), %% tambem determina o prazo
+
+write("Datas Possíveis: "),
 writeln(DatasPossiveis),
-DatasDeInicio :: DatasPossiveis, %% trocar para o intervalo do calendario, no futuro
+write("Dia do prazo: "),
+writeln(Prazo),
+
+DatasDeInicio :: DatasPossiveis, 
 datadeinicio_constrs(Tarefas, DatasDeInicio, Prazo),
 horadeinicio_constrs(Tarefas, DatasDeInicio ,HorasDeInicio),
 intervalo_constrs(IntervalosTo, IntervalosFrom, HorasDeInicio, DatasDeInicio),
 term_variables([HorasDeInicio, DatasDeInicio], Vars),
 labeling(Vars),
+
+write("Horas de Início: "),
 writeln(HorasDeInicio),
+write("Datas de Início: "),
 writeln(DatasDeInicio).
 
 
@@ -29,8 +37,8 @@ writeln(DatasDeInicio).
 %% basicamente olhando só para os dias
 %% e assumindo que qualquer tarefa pode começar em qualquer dia do mes (ignorando o calendario)
 
-
-calendario_to_list([d(Dia1,Mes1,_)|Datas], [1|RestoLista]) :-
+calendario_to_list([d(Dia1,Mes1,_)|Datas], [1|RestoLista], DiaPrazo, MesPrazo, Prazo) :-
+	Prazo is 31*(MesPrazo-Mes1) + (DiaPrazo-Dia1+1),
 	calendario_to_list_(Dia1,Mes1,Datas,RestoLista).
 
 calendario_to_list_(_,_,[],[]).
