@@ -305,10 +305,10 @@ int minWorkersCritical(){
 }
  
 
-// uses brute force approach to discover min possible numbers of workers without fixing any date for the tasks
+// discover min possible numbers of workers without fixing any date for the tasks
 // and without making the project finish late
 
-bool bruteForceCheckNWorkers(int n,vector<pair<int,int> >sortedActivitiesByLSminusES, int lowerBound[], int upperBound[],int minNWorkers){
+bool CheckNWorkers(int n,vector<pair<int,int> >sortedActivitiesByLSminusES, int lowerBound[], int upperBound[],int minNWorkers){
     bool stillPossible = false, ret=false;
     int tmpActivity;
     int newLowerBound[MAX_N_VERTS];
@@ -353,7 +353,7 @@ bool bruteForceCheckNWorkers(int n,vector<pair<int,int> >sortedActivitiesByLSmin
 
         if(stillPossible){
             // recursive for the next task
-            if(bruteForceCheckNWorkers(n+1, sortedActivitiesByLSminusES, newLowerBound, newUpperBound,minNWorkers)){
+            if(CheckNWorkers(n+1, sortedActivitiesByLSminusES, newLowerBound, newUpperBound,minNWorkers)){
                 startDates[tmpActivity] = tmpDate;
                 return true;
                 //ret = true;
@@ -413,7 +413,7 @@ int main (){
     }
     
     for(int possibleNWorkers = minWCri; possibleNWorkers<= minW; possibleNWorkers++){
-       if(bruteForceCheckNWorkers(0,sortedActivitiesByLSminusES, ES, LS, possibleNWorkers)){
+       if(CheckNWorkers(0,sortedActivitiesByLSminusES, ES, LS, possibleNWorkers)){
             cout << "Número mínimo de trabalhadores sem ES's fixados: " << possibleNWorkers << endl;
             break;
        }
