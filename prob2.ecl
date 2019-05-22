@@ -36,7 +36,10 @@ writeln(DatasDeInicio).
 %%Estou assumindo que só tem 1 mes
 %% basicamente olhando só para os dias
 %% e assumindo que qualquer tarefa pode começar em qualquer dia do mes (ignorando o calendario)
-
+calendario_to_list([d(_,_,6)|Datas], RestoLista, DiaPrazo, MesPrazo, Prazo) :-
+	calendario_to_list(Datas,RestoLista,DiaPrazo,MesPrazo,Prazo).
+calendario_to_list([d(_,_,7)|Datas], RestoLista, DiaPrazo, MesPrazo, Prazo) :-
+	calendario_to_list(Datas,RestoLista,DiaPrazo,MesPrazo,Prazo).
 calendario_to_list([d(Dia1,Mes1,_)|Datas], [1|RestoLista], DiaPrazo, MesPrazo, Prazo) :-
 	Prazo is 31*(MesPrazo-Mes1) + (DiaPrazo-Dia1+1),
 	calendario_to_list_(Dia1,Mes1,Datas,RestoLista).
