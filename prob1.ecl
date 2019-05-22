@@ -1,6 +1,6 @@
 :-lib(ic).
 :-lib(ic_edge_finder).
-:-lib(branch_and_bound).
+% :-lib(branch_and_bound).
 % :-lib(util).
 
 % (OK) Qual é a duração mínima do projeto?
@@ -12,7 +12,7 @@
 
 % (OK) Qual o número mínimo de trabalhadores a contratar? Quando é que cada tarefa tem início?
 
-% Existem soluções ótimas alternativas?
+% (OK) Existem soluções ótimas alternativas?
 
 go(Dados):-
     compile(Dados),
@@ -64,29 +64,24 @@ go(Dados):-
     write('MinWorkersCritPath: '),
     writeln(MinWorkersCrit),
 
-    % write('StartDate: '),
-    % writeln(StartDates),
-
     term_variables([MinWorkers, StartDates], Vars),
     cumulative(StartDates, Durations, Workers, MinWorkers),
-    % get_min(MinWorkers, MinWorkers),
-    labeling(Vars),
     
     get_min(MinWorkers, MinWorkers_),
     write('MinWorkers(ConditionFree): '),
     writeln(MinWorkers_),
-    
-    % findfirstn(2, StartDates, labeling(Vars), Instances),
-    % length(Instances,NSols),
-    % write('Unique Solution? '),
-    % (NSols>1,!,write('False');write('True')),nl,
-    % write(Instances),nl
 
+    findfirstn(2, StartDates, labeling(Vars), Instances),
+    length(Instances,NSols),
+    write('Unique Solution? '),
+    (NSols>1,!,write('False');write('True')),nl,
+    write(Instances),nl, 
+    labeling(Vars),!.
 
-    write('StartDate: '),
-    writeln(StartDates),!
-    .
-
+getMinDate([],[]).
+getMinDate([Date|Dates], [D|Ds]):-
+    get_min(Date, D),
+    getMinDate(Dates, Ds).
 
 get_critDados(_,[],[],[],[]).
 get_critDados(ES,[ID|CritID], [CD|CritDur], [W|Workers], [ESi|CritES]):-
