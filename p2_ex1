@@ -1,7 +1,7 @@
 tarefa(1,[5],3,[r(enfermeiro,2),r(medico,1)],0).
 tarefa(2,[5,3],2,[r(enfermeiro,1)],0).
-tarefa(4,[],1,[r(enfermeiro,2),r(informatico,1)],0).
 tarefa(3,[],3,[r(musico,1)],0).
+tarefa(4,[],1,[r(enfermeiro,2),r(informatico,1)],0).
 tarefa(5,[],4,[r(enfermeiro,1)],0).
 tarefa(6,[4],1,[r(medico,1),r(professor,1),r(enfermeiro,1)],0).
 tarefa(7,[],4,[r(professor,1)],0).
