@@ -2,7 +2,7 @@
 
 # Problema 1:
 
-* Solução em eclipse: prob1.ecl
+*  **Solução em eclipse: prob1.ecl**
 
 No ambiente do eclipse-clp:
 
@@ -17,7 +17,7 @@ Para rodar basta (Dados representa o ficheiro em que dados estão guardados):
 ```
   go(Dados).
 ```
-* Solução em c++: prob1.cpp
+* **Solução em c++: prob1.cpp**
 
 Para compilar basta:
 ```
