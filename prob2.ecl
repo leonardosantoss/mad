@@ -40,21 +40,21 @@ horadeinicio_constrs([],_,_).
 horadeinicio_constrs([ID|Tars], HorasDeInicio, DatasDeInicio) :-
 	element(ID, HorasDeInicio, Hi),
 	element(ID, DatasDeInicio, DataI),
-	tarefa(ID, Prec, Duri,_,_),
-	horadeinicio_constrs_(Prec,HorasDeInicio, DataI ,Hi, Duri),
+	tarefa(ID, Prec, DurI,_,_),
+	horadeinicio_constrs_(Prec,HorasDeInicio, DataI ,Hi, DurI),
 	Hi :: [8..12, 13..17],
-	Hi #=< 17,
+	%%Hi + Dur #=< 17 se Hi >= 13  OU Hi+DurI <= 12 se Hi entre 8 e 13,
 	horadeinicio_constrs(Tars, HorasDeInicio, DatasDeInicio).
 
 
 horadeinicio_constrs_([],_,_,_).
-horadeinicio_constrs_([P|Precs],HorasDeInicio,DataI,Hi,Duri) :- 
+horadeinicio_constrs_([P|Precs],HorasDeInicio,DataI,Hi,DurI) :- 
      element(P,HorasDeInicio,Hj),
      element(P,DatasDeInicio,DataJ),
      DataI #=< DataJ,
-     Hi + Duri #=< (DataJ-DataI) * 24 + Hj, %%ignorando intervalos
-     Hi + Duri #=< Hj,
-     prec_constrs_(Precs,HorasDeInicio,DataI,Hi,Duri).
+     Hi + DurI #=< (DataJ-DataI) * 24 + Hj, %%ignorando intervalos
+     Hi + DurI #=< Hj,
+     prec_constrs_(Precs,HorasDeInicio,DataI,Hi,DurI).
 
 
 
