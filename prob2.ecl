@@ -13,6 +13,7 @@ horadeinicio_constrs(Tarefas, DatasDeInicio ,HorasDeInicio).
 
 %%Estou ignorando intervalos e assumindo que só tem 1 mes
 %% basicamente olhando só para os dias
+%% e assumindo que qualquer tarefa pode começar em qualquer dia do mes (ignorando o calendario)
 
 obter_dados(Tarefas, Intervalos, Trabalhadores) :- 
 	findall(ID,tarefa(ID,_,_,_,_),Tarefas), 
@@ -55,11 +56,6 @@ horadeinicio_constrs_([P|Precs],HorasDeInicio,DataI,Hi,DurI) :-
      Hi + DurI #=< (DataJ-DataI) * 24 + Hj, %%ignorando intervalos
      Hi + DurI #=< Hj,
      prec_constrs_(Precs,HorasDeInicio,DataI,Hi,DurI).
-
-
-
-
-
 
 
 
