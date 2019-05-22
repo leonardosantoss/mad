@@ -1,6 +1,7 @@
 :- lib(ic).
 :- lib(ic_global).
 :- lib(branch_and_bound).
+:- lib(clpfd).
 
 
 %%no calendario, datas devem ser convertidas para inteiros, em que a primeira é 1,
@@ -13,7 +14,11 @@ length(DatasDeInicio, N),
 DatasDeInicio :: 1..31, %% trocar para o intervalo do calendario, no futuro
 prazo(d(Prazo,_,_)),  %% assumindo que prazo é um dia e ignorando completamente que existem meses
 datadeinicio_constrs(Tarefas, DatasDeInicio, Prazo),
-horadeinicio_constrs(Tarefas, DatasDeInicio ,HorasDeInicio).
+horadeinicio_constrs(Tarefas, DatasDeInicio ,HorasDeInicio),
+term_variables([HorasDeInicio, DatasDeInicio], Vars),
+labeling(Vars),
+writeln(HorasDeInicio),
+writeln(DatasDeInicio).
 
 
 %%Estou ignorando intervalos e assumindo que só tem 1 mes
@@ -48,7 +53,7 @@ horadeinicio_constrs([ID|Tars], DatasDeInicio, HorasDeInicio) :-
 	Hi :: [8..12, 13..17],
 	tarefa(ID, Prec, DurI,_,_),
 	horadeinicio_constrs_(Prec,DatasDeInicio,HorasDeInicio ,DataI ,Hi, DurI),
-	%%Hi + Dur #=< 17 se Hi >= 13  OU Hi+DurI <= 12 se Hi entre 8 e 13,
+	((Hi#=<12 #/\ Hi+DurI#=<12) #\/ (Hi#>=13 #/\ Hi+DurI#=<17)),
 	horadeinicio_constrs(Tars, DatasDeInicio, HorasDeInicio).
 
 
@@ -58,7 +63,6 @@ horadeinicio_constrs_([P|Precs],DatasDeInicio,HorasDeInicio,DataI,Hi,DurI) :-
      element(P,DatasDeInicio,DataJ),
      DataI #=< DataJ,
      Hi + DurI #=< (DataJ-DataI) * 24 + Hj, %%ignorando intervalos
-     Hi + DurI #=< Hj,
      horadeinicio_constrs_(Precs,DatasDeInicio,HorasDeInicio,DataI,Hi,DurI).
 
 
