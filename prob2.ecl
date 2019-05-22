@@ -7,7 +7,7 @@
 %%no calendario, datas devem ser convertidas para inteiros, em que a primeira é 1,
 %% e as seguintes sao quantos dias passaram entre elas e a primeira
 
-go(Dados) :- compile(Dados), obter_dados(Tarefas, Intervalos, Trabalhadores), 
+go(Dados) :- compile(Dados), obter_dados(Tarefas, IntervalosTo,IntervalosFrom, Trabalhadores), 
 length(Tarefas, N),
 length(HorasDeInicio, N),
 length(DatasDeInicio, N),
@@ -15,20 +15,35 @@ DatasDeInicio :: 1..31, %% trocar para o intervalo do calendario, no futuro
 prazo(d(Prazo,_,_)),  %% assumindo que prazo é um dia e ignorando completamente que existem meses
 datadeinicio_constrs(Tarefas, DatasDeInicio, Prazo),
 horadeinicio_constrs(Tarefas, DatasDeInicio ,HorasDeInicio),
+intervalo_constrs(IntervalosTo, IntervalosFrom, HorasDeInicio, DatasDeInicio),
 term_variables([HorasDeInicio, DatasDeInicio], Vars),
 labeling(Vars),
 writeln(HorasDeInicio),
 writeln(DatasDeInicio).
 
 
-%%Estou ignorando intervalos e assumindo que só tem 1 mes
+%%Estou assumindo que só tem 1 mes
 %% basicamente olhando só para os dias
 %% e assumindo que qualquer tarefa pode começar em qualquer dia do mes (ignorando o calendario)
 
-obter_dados(Tarefas, Intervalos, Trabalhadores) :- 
+obter_dados(Tarefas, IntervalosTo,IntervalosFrom, Trabalhadores) :- 
 	findall(ID,tarefa(ID,_,_,_,_),Tarefas), 
-    findall(J,intervalo(J,_,_,_),Intervalos),
+    findall(J,intervalo(J,_,_,_),IntervalosTo),
+    findall(K,intervalo(_,K,_,_),IntervalosFrom),
     findall(T,trabalhador(T,_),Trabalhadores).
+
+intervalo_constrs([], [], _, _).
+intervalo_constrs([To|IntervalosTo], [From|IntervalosFrom], HorasDeInicio, DatasDeInicio) :-
+	element(From, HorasDeInicio,Hi),
+	element(From, DatasDeInicio, DataI),
+	element(To, DatasDeInicio, DataJ),
+	element(To, HorasDeInicio, Hj),
+	tarefa(From, _,DurI,_,_),
+	intervalo(To,From,MinInterval, MaxInterval),
+	Hi + DurI + MinInterval #=< (DataJ-DataI) * 24 + Hj,
+	Hi + DurI + MaxInterval #>= (DataJ-DataI) * 24 + Hj,
+	intervalo_constrs(IntervalosTo, IntervalosFrom, HorasDeInicio, DatasDeInicio).
+
 
 
 datadeinicio_constrs([],_,_).
