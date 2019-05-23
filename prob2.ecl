@@ -27,11 +27,11 @@ horadeinicio_constrs(Tarefas, DatasDeInicio ,HorasDeInicio),
 intervalo_constrs(IntervalosTo, IntervalosFrom, HorasDeInicio, DatasDeInicio),
 trabalhadores_constrs(RequisitosPorTarefa, ListaDeVariaveis),
 trabalhadores_prec_constrs(Tarefas,DatasDeInicio, HorasDeInicio, ListaDeVariaveis),
-term_variables([Concl,ListaDeVariaveis, HorasDeInicio, DatasDeInicio], Vars),
+term_variables([Concl,HorasDeInicio, DatasDeInicio], Vars),
 
 
 
-labeling([min(Concl)], Vars),
+labeling([ff,min(Concl)], Vars),
 
 write("Trabalhadores por atividade: "),
 writeln(ListaDeVariaveis),
@@ -128,7 +128,6 @@ datadeinicio_constrs([ID|Tars], DatasDeInicio, Prazo, Concl) :-
 	DataI :: [1..31],
 	tarefa(ID,Prec,_,_,_),
 	datadeinicio_constrs_(Prec,DatasDeInicio,DataI),
-	DataI #=< Prazo,
 	DataI #=< Concl,
 	Concl #=< Prazo,
 	datadeinicio_constrs(Tars, DatasDeInicio, Prazo,Concl).
