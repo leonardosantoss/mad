@@ -26,8 +26,6 @@ horadeinicio_constrs(Tarefas, DatasDeInicio ,HorasDeInicio),
 intervalo_constrs(IntervalosTo, IntervalosFrom, HorasDeInicio, DatasDeInicio),
 trabalhadores_constrs(RequisitosPorTarefa, ListaDeVariaveis, MaxIndexTrab,Cost),
 trabalhadores_prec_constrs(Tarefas,DatasDeInicio, HorasDeInicio, ListaDeVariaveis),
-write("Lista de variaveis: "),
-writeln(ListaDeVariaveis),
 term_variables([Cost,Concl,HorasDeInicio, DatasDeInicio,ListaDeVariaveis], Vars),
 
 bb_min(labeling(Vars),Cost, _),
@@ -94,7 +92,6 @@ construct_list([r(E,N)|RequisitosTarefa],[Sub1|Sub], MaxIndexTrab,Cost) :-
 
 fill_list(_,[],_,_).
 fill_list(E,[X|Sub1],MaxIndexTrab,Cost):-
-	writeln("k"),
 	findall(IdTrab,(trabalhador(IdTrab, ListEspec),member(E,ListEspec)), ListIdsTrabs), 
 	MaxPlusOne is MaxIndexTrab + 1,
 	append(ListIdsTrabs, [MaxPlusOne..inf], Y),
