@@ -9,7 +9,7 @@
 #include <iterator>
 #include <utility>  
  
-#define MAX_N_VERTS 1500
+#define MAX_N_VERTS 2000
 #define CASE_CRIT 1
 #define CASE_ALL_TASKS 2
 using namespace std;
@@ -411,7 +411,6 @@ int main (){
     for(int i = 0; i<=durMin;i++){
         currentNWorkers[i] = 0;
     }
-    
     for(int possibleNWorkers = minWCri; possibleNWorkers<= minW; possibleNWorkers++){
        if(CheckNWorkers(0,sortedActivitiesByLSminusES, ES, LS, possibleNWorkers)){
             cout << "Número mínimo de trabalhadores sem ES's fixados: " << possibleNWorkers << endl;
