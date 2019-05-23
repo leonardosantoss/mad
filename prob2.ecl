@@ -37,7 +37,10 @@ writeln(HorasDeInicio),
 write("Datas de Início: "),
 writeln(DatasDeInicio),
 write("Custo: "),
-writeln(Cost).
+writeln(Cost),
+write("Trabalhadores Contratados: "),
+Contratados is Cost-MaxIndexTrab,
+writeln(Contratados).
 
 
 obter_dados(TarefasSort, IntervalosTo,IntervalosFrom, TrabalhadoresSort, Especializacoes, RequisitosPorTarefa) :- 

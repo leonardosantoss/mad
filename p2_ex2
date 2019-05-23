@@ -16,6 +16,8 @@ trabalhador(3,[enfermeiro,medico,professor]).
 trabalhador(6,[medico]).
 trabalhador(7,[musico,informatico]).
 
+intervalo(0,0,0,0).
+
 prazo(d(21,5,3)).
 
 calendario([d(21,5,3),d(22,5,4),d(23,5,5),d(24,5,6),d(27,5,2),d(28,5,3),d(29,5,4),d(30,5,5)]).
