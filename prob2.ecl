@@ -7,7 +7,7 @@
 %%no calendario, datas devem ser convertidas para inteiros, em que a primeira é 1,
 %% e as seguintes sao quantos dias passaram entre elas e a primeira
 
-go(Dados) :- compile(Dados), obter_dados(Tarefas, IntervalosTo,IntervalosFrom, Trabalhadores), 
+go(Dados) :- compile(Dados), obter_dados(Tarefas, IntervalosTo,IntervalosFrom, Trabalhadores, Especializacoes, RequisitosPorTarefa), 
 length(Tarefas, N),
 length(HorasDeInicio, N),
 length(DatasDeInicio, N),
@@ -21,16 +21,67 @@ write("Dia do prazo: "),
 writeln(Prazo),
 
 DatasDeInicio :: DatasPossiveis, 
+
 datadeinicio_constrs(Tarefas, DatasDeInicio, Prazo),
 horadeinicio_constrs(Tarefas, DatasDeInicio ,HorasDeInicio),
 intervalo_constrs(IntervalosTo, IntervalosFrom, HorasDeInicio, DatasDeInicio),
-term_variables([HorasDeInicio, DatasDeInicio], Vars),
+trabalhadores_constrs(RequisitosPorTarefa, ListaDeVariaveis),
+trabalhadores_prec_constrs(Tarefas,DatasDeInicio, HorasDeInicio, ListaDeVariaveis),
+writeln(ListaDeVariaveis),
+term_variables([ListaDeVariaveis, HorasDeInicio, DatasDeInicio], Vars),
 labeling(Vars),
 
 write("Horas de Início: "),
 writeln(HorasDeInicio),
 write("Datas de Início: "),
 writeln(DatasDeInicio).
+
+
+
+
+element_list(1, [X|T], X).
+element_list(N, [_|T], X):-
+	element_list(N_, T, X), N is N_ + 1.
+
+trabalhadores_prec_constrs([],_,_,_).
+trabalhadores_prec_constrs([ID|Tarefa], DatasDeInicio, HorasDeInicio, ListaDeVariaveis):-
+	element(ID, HorasDeInicio, Hi),
+	element(ID, DatasDeInicio, DataI),
+	element_list(ID, ListaDeVariaveis, TrabI),
+	tarefa(ID,_,DurI,_,_),
+	trabalhadores_prec_constrs_(Tarefa, Hi, DataI, DurI, TrabI,HorasDeInicio, DatasDeInicio, ListaDeVariaveis).
+
+trabalhadores_prec_constrs_([],_,_,_,_,_).
+trabalhadores_prec_constrs_([IDJ|Tarefa], Hi, DataI, DurI,TrabI ,HorasDeInicio, DatasDeInicio, ListaDeVariaveis) :-
+
+	element(IDJ, HorasDeInicio, Hj),
+	element(IDJ, DatasDeInicio, DataJ),
+	element_list(IDJ, ListaDeVariaveis, TrabJ),
+	tarefa(IDJ, _, DurJ, _,_),
+	append(TrabI, TrabJ, TrabIJ),
+	nvalue(CardinalConcatenacao,TrabIJ),
+	length(TrabIJ, TamanhoLista),
+	((DataI*24 + Hi #< DataJ*24 + Hj +DurJ) #/\ (DataJ*24 + Hj #< DataI*24 + Hi + DurI)) #==> (TamanhoLista #= CardinalConcatenacao) ,
+	trabalhadores_prec_constrs_(Tarefa, Hi, DataI, DurI, TrabI ,HorasDeInicio, DatasDeInicio, ListaDeVariaveis).
+
+
+
+trabalhadores_constrs([],[]).
+trabalhadores_constrs([RequisitosTarefa|Resto], [SubFlat|ListaDeVariaveis]) :-
+	length(RequisitosTarefa, Nrequisitos),length(Sub,Nrequisitos),
+	construct_list(RequisitosTarefa,Sub), flatten(Sub, SubFlat),ic_global:alldifferent(SubFlat),trabalhadores_constrs(Resto, ListaDeVariaveis).
+
+construct_list([],[]).
+construct_list([r(E,N)|RequisitosTarefa],[Sub1|Sub]) :-
+	length(Sub1, N), fill_list(E,Sub1),construct_list(RequisitosTarefa, Sub).
+
+fill_list(_,[]).
+fill_list(E,[X|Sub1]):-
+	findall(IdTrab,(trabalhador(IdTrab, ListEspec),member(E,ListEspec)), ListIdsTrabs), 
+	X :: ListIdsTrabs,
+	fill_list(E,Sub1).
+
+%RequisitosPorTarefa = [[r(T,N)],[]]
 
 
 %%Estou assumindo que só tem 1 mes
@@ -53,11 +104,13 @@ calendario_to_list_(Dia1, Mes1, [d(Data,Mes,_)|Datas], [Dia|RestoLista]) :-
 	Dia is (Data-Dia1+1) + 31*(Mes-Mes1),
 	calendario_to_list_(Dia1, Mes1, Datas, RestoLista).
 
-obter_dados(Tarefas, IntervalosTo,IntervalosFrom, Trabalhadores) :- 
+obter_dados(Tarefas, IntervalosTo,IntervalosFrom, Trabalhadores, Especializacoes, RequisitosPorTarefa) :- 
 	findall(ID,tarefa(ID,_,_,_,_),Tarefas), 
     findall(J,intervalo(J,_,_,_),IntervalosTo),
     findall(K,intervalo(_,K,_,_),IntervalosFrom),
-    findall(T,trabalhador(T,_),Trabalhadores).
+    findall(T,trabalhador(T,_),Trabalhadores),
+    findall(E,trabalhador(_,E),Especializacoes),
+    findall(R,tarefa(_,_,_,R,_),RequisitosPorTarefa) .
 
 intervalo_constrs([], [], _, _).
 intervalo_constrs([To|IntervalosTo], [From|IntervalosFrom], HorasDeInicio, DatasDeInicio) :-
