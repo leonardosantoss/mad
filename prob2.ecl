@@ -18,24 +18,23 @@ write("Dia do prazo: "),
 writeln(Prazo),
 
 DatasDeInicio :: DatasPossiveis, 
+
+%%prazo_constrs(DatasDeInicio, Prazo),
 ic:max(Trabalhadores, MaxIndexTrab), 
 Cost #>= MaxIndexTrab,
 Concl :: [1..Prazo],
 datadeinicio_constrs(Tarefas, DatasDeInicio, Prazo, Concl),
 horadeinicio_constrs(Tarefas, DatasDeInicio ,HorasDeInicio),
 intervalo_constrs(IntervalosTo, IntervalosFrom, HorasDeInicio, DatasDeInicio),
-write("Horas de Início: "),
-writeln(HorasDeInicio),
-write("Datas de Início: "),
-writeln(DatasDeInicio),
+
 
 trabalhadores_constrs(RequisitosPorTarefa, ListaDeVariaveis, MaxIndexTrab,Cost),
 trabalhadores_prec_constrs(Tarefas,DatasDeInicio, HorasDeInicio, ListaDeVariaveis),
 term_variables([Cost,Concl,HorasDeInicio, DatasDeInicio,ListaDeVariaveis], Vars),
-labeling([ff,min(Cost),min(Concl)],Vars),
-%%term_variables([Concl,HorasDeInicio,DatasDeInicio], Vars),
+
+%%labeling([ff,min(Cost),min(Concl)],Vars),
 %%labeling([ff,min(Concl)],Vars),
-%%bb_min(labeling(Vars),Cost, _),
+bb_min(labeling(Vars),Cost, _),
 
 write("Trabalhadores por atividade: "),
 writeln(ListaDeVariaveis),
@@ -63,6 +62,7 @@ obter_dados(TarefasSort, IntervalosTo,IntervalosFrom, TrabalhadoresSort, Especia
 element_list(1, [X|T], X).
 element_list(N, [_|T], X):-
 	element_list(N_, T, X), N is N_ + 1.
+
 
 trabalhadores_prec_constrs([],_,_,_).
 trabalhadores_prec_constrs([ID|Tarefa], DatasDeInicio, HorasDeInicio, ListaDeVariaveis):-
@@ -146,6 +146,7 @@ intervalo_constrs([To|IntervalosTo], [From|IntervalosFrom], HorasDeInicio, Datas
 
 datadeinicio_constrs([],_,_,_).
 datadeinicio_constrs([ID|Tars], DatasDeInicio, Prazo, Concl) :-
+	element(ID,DatasDeInicio,DataI),
 	tarefa(ID,Prec,_,_,_),
 	DataI #=< Concl,
 	Concl #=< Prazo,
