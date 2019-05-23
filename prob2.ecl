@@ -20,15 +20,21 @@ writeln(Prazo),
 DatasDeInicio :: DatasPossiveis, 
 ic:max(Trabalhadores, MaxIndexTrab), 
 Cost #>= MaxIndexTrab,
-
+Concl :: [1..Prazo],
 datadeinicio_constrs(Tarefas, DatasDeInicio, Prazo, Concl),
 horadeinicio_constrs(Tarefas, DatasDeInicio ,HorasDeInicio),
 intervalo_constrs(IntervalosTo, IntervalosFrom, HorasDeInicio, DatasDeInicio),
+write("Horas de Início: "),
+writeln(HorasDeInicio),
+write("Datas de Início: "),
+writeln(DatasDeInicio),
+
 trabalhadores_constrs(RequisitosPorTarefa, ListaDeVariaveis, MaxIndexTrab,Cost),
 trabalhadores_prec_constrs(Tarefas,DatasDeInicio, HorasDeInicio, ListaDeVariaveis),
 term_variables([Cost,Concl,HorasDeInicio, DatasDeInicio,ListaDeVariaveis], Vars),
-
 labeling([ff,min(Cost),min(Concl)],Vars),
+%%term_variables([Concl,HorasDeInicio,DatasDeInicio], Vars),
+%%labeling([ff,min(Concl)],Vars),
 %%bb_min(labeling(Vars),Cost, _),
 
 write("Trabalhadores por atividade: "),
@@ -140,11 +146,10 @@ intervalo_constrs([To|IntervalosTo], [From|IntervalosFrom], HorasDeInicio, Datas
 
 datadeinicio_constrs([],_,_,_).
 datadeinicio_constrs([ID|Tars], DatasDeInicio, Prazo, Concl) :-
-	DataI :: [1..31],
 	tarefa(ID,Prec,_,_,_),
-	datadeinicio_constrs_(Prec,DatasDeInicio,DataI),
 	DataI #=< Concl,
 	Concl #=< Prazo,
+	datadeinicio_constrs_(Prec,DatasDeInicio,DataI),
 	datadeinicio_constrs(Tars, DatasDeInicio, Prazo,Concl).
 
 datadeinicio_constrs_([],_,_).
@@ -169,9 +174,6 @@ horadeinicio_constrs_([],_,_,_,_,_).
 horadeinicio_constrs_([P|Precs],DatasDeInicio,HorasDeInicio,DataI,Hi,DurI) :- 
      element(P,HorasDeInicio,Hj),
      element(P,DatasDeInicio,DataJ),
-     DataI #=< DataJ,
      Hi + DurI #=< (DataJ-DataI) * 24 + Hj,
      horadeinicio_constrs_(Precs,DatasDeInicio,HorasDeInicio,DataI,Hi,DurI).
-
-
 

@@ -16,7 +16,7 @@ trabalhador(3,[enfermeiro,medico,professor]).
 trabalhador(6,[medico]).
 trabalhador(7,[musico,informatico]).
 
-intervalo(1,2,0,0).
+intervalo(1,2,0,10000).
 
 prazo(d(22,5,4)).
 
