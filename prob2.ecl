@@ -131,7 +131,7 @@ datadeinicio_constrs([ID|Tars], DatasDeInicio, Prazo, Concl) :-
 	DataI #=< Prazo,
 	DataI #=< Concl,
 	Concl #=< Prazo,
-	datadeinicio_constrs(Tars, DatasDeInicio, Prazo).
+	datadeinicio_constrs(Tars, DatasDeInicio, Prazo,Concl).
 
 datadeinicio_constrs_([],_,_).
 datadeinicio_constrs_([P|Precs],DatasDeInicio,DataI) :-
