@@ -22,20 +22,23 @@ writeln(Prazo),
 
 DatasDeInicio :: DatasPossiveis, 
 
-datadeinicio_constrs(Tarefas, DatasDeInicio, Prazo),
+datadeinicio_constrs(Tarefas, DatasDeInicio, Prazo, Concl),
 horadeinicio_constrs(Tarefas, DatasDeInicio ,HorasDeInicio),
 intervalo_constrs(IntervalosTo, IntervalosFrom, HorasDeInicio, DatasDeInicio),
 trabalhadores_constrs(RequisitosPorTarefa, ListaDeVariaveis),
 trabalhadores_prec_constrs(Tarefas,DatasDeInicio, HorasDeInicio, ListaDeVariaveis),
-writeln(ListaDeVariaveis),
-term_variables([ListaDeVariaveis, HorasDeInicio, DatasDeInicio], Vars),
-labeling(Vars),
+term_variables([Concl,ListaDeVariaveis, HorasDeInicio, DatasDeInicio], Vars),
 
+
+
+labeling([min(Concl)], Vars),
+
+write("Trabalhadores por atividade: "),
+writeln(ListaDeVariaveis),
 write("Horas de Início: "),
 writeln(HorasDeInicio),
 write("Datas de Início: "),
 writeln(DatasDeInicio).
-
 
 
 
@@ -51,7 +54,7 @@ trabalhadores_prec_constrs([ID|Tarefa], DatasDeInicio, HorasDeInicio, ListaDeVar
 	tarefa(ID,_,DurI,_,_),
 	trabalhadores_prec_constrs_(Tarefa, Hi, DataI, DurI, TrabI,HorasDeInicio, DatasDeInicio, ListaDeVariaveis).
 
-trabalhadores_prec_constrs_([],_,_,_,_,_).
+trabalhadores_prec_constrs_([],_,_,_,_,_,_,_).
 trabalhadores_prec_constrs_([IDJ|Tarefa], Hi, DataI, DurI,TrabI ,HorasDeInicio, DatasDeInicio, ListaDeVariaveis) :-
 
 	element(IDJ, HorasDeInicio, Hj),
@@ -81,12 +84,6 @@ fill_list(E,[X|Sub1]):-
 	X :: ListIdsTrabs,
 	fill_list(E,Sub1).
 
-%RequisitosPorTarefa = [[r(T,N)],[]]
-
-
-%%Estou assumindo que só tem 1 mes
-%% basicamente olhando só para os dias
-%% e assumindo que qualquer tarefa pode começar em qualquer dia do mes (ignorando o calendario)
 calendario_to_list([d(_,_,6)|Datas], RestoLista, DiaPrazo, MesPrazo, Prazo) :-
 	calendario_to_list(Datas,RestoLista,DiaPrazo,MesPrazo,Prazo).
 calendario_to_list([d(_,_,7)|Datas], RestoLista, DiaPrazo, MesPrazo, Prazo) :-
@@ -126,12 +123,14 @@ intervalo_constrs([To|IntervalosTo], [From|IntervalosFrom], HorasDeInicio, Datas
 
 
 
-datadeinicio_constrs([],_,_).
-datadeinicio_constrs([ID|Tars], DatasDeInicio, Prazo) :-
+datadeinicio_constrs([],_,_,_).
+datadeinicio_constrs([ID|Tars], DatasDeInicio, Prazo, Concl) :-
 	DataI :: [1..31],
 	tarefa(ID,Prec,_,_,_),
 	datadeinicio_constrs_(Prec,DatasDeInicio,DataI),
 	DataI #=< Prazo,
+	DataI #=< Concl,
+	Concl #=< Prazo,
 	datadeinicio_constrs(Tars, DatasDeInicio, Prazo).
 
 datadeinicio_constrs_([],_,_).
