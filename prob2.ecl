@@ -45,7 +45,8 @@ write("Custo: "),
 writeln(Custo),
 write("Trabalhadores Contratados: "),
 Contratados is Custo-MaxIndexTrab,
-writeln(Contratados).
+greater(0,Contratados, ContratadosF),
+writeln(ContratadosF).
 
 
 obter_dados(TarefasSort, IntervalosTo,IntervalosFrom, TrabalhadoresSort, Especializacoes, RequisitosPorTarefa) :- 
@@ -58,13 +59,15 @@ obter_dados(TarefasSort, IntervalosTo,IntervalosFrom, TrabalhadoresSort, Especia
     findall(E,(member(X,TrabalhadoresSort),trabalhador(X,E)),Especializacoes),
     findall(R,(member(X,TarefasSort),tarefa(X,_,_,R,_)), RequisitosPorTarefa).
 
+greater(X,Y,X):-X>Y.
+greater(_,Y,Y).
+
 element_list(1, [X|T], X).
 element_list(N, [_|T], X):-
 	element_list(N_, T, X), N is N_ + 1.
 
 custo_constrs([],_).
 custo_constrs([Id|Resto], Custo) :-
-	writeln(Id),
 	Custo #>= Id,
 	custo_constrs(Resto, Custo).
 
