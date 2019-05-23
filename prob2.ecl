@@ -28,7 +28,8 @@ trabalhadores_constrs(RequisitosPorTarefa, ListaDeVariaveis, MaxIndexTrab,Cost),
 trabalhadores_prec_constrs(Tarefas,DatasDeInicio, HorasDeInicio, ListaDeVariaveis),
 term_variables([Cost,Concl,HorasDeInicio, DatasDeInicio,ListaDeVariaveis], Vars),
 
-bb_min(labeling(Vars),Cost, _),
+labeling([ff,min(Cost),min(Concl)],Vars),
+%%bb_min(labeling(Vars),Cost, _),
 
 write("Trabalhadores por atividade: "),
 writeln(ListaDeVariaveis),

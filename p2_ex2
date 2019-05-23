@@ -8,13 +8,14 @@ tarefa(7,[],4,[r(professor,1)],0).
 tarefa(8,[],3,[r(informatico,2)],0).
 
 trabalhador(1,[professor,enfermeiro]).
-trabalhador(5,[enfermeiro,musico]).
 trabalhador(2,[professor,medico]).
-trabalhador(4,[enfermeiro]).
-trabalhador(8,[informatico]).
 trabalhador(3,[enfermeiro,medico,professor]).
+trabalhador(4,[enfermeiro]).
+trabalhador(5,[enfermeiro,musico]).
 trabalhador(6,[medico]).
 trabalhador(7,[musico,informatico]).
+trabalhador(8,[informatico]).
+
 
 intervalo(1,2,0,0).
 
