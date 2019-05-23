@@ -4,7 +4,6 @@
 :- lib(clpfd).
 
 
-
 go(Dados) :- compile(Dados), obter_dados(Tarefas, IntervalosTo,IntervalosFrom, Trabalhadores, Especializacoes, RequisitosPorTarefa), 
 length(Tarefas, N),
 length(HorasDeInicio, N),
