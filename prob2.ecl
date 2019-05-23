@@ -19,22 +19,21 @@ writeln(Prazo),
 
 DatasDeInicio :: DatasPossiveis, 
 
-%%prazo_constrs(DatasDeInicio, Prazo),
 ic:max(Trabalhadores, MaxIndexTrab), 
-Cost #>= MaxIndexTrab,
+Custo #>= MaxIndexTrab,
 Concl :: [1..Prazo],
 datadeinicio_constrs(Tarefas, DatasDeInicio, Prazo, Concl),
 horadeinicio_constrs(Tarefas, DatasDeInicio ,HorasDeInicio),
 intervalo_constrs(IntervalosTo, IntervalosFrom, HorasDeInicio, DatasDeInicio),
 
 
-trabalhadores_constrs(RequisitosPorTarefa, ListaDeVariaveis, MaxIndexTrab,Cost),
-trabalhadores_prec_constrs(Tarefas,DatasDeInicio, HorasDeInicio, ListaDeVariaveis),
-term_variables([Cost,Concl,HorasDeInicio, DatasDeInicio,ListaDeVariaveis], Vars),
+trabalhadores_constrs(RequisitosPorTarefa, ListaDeVariaveis, MaxIndexTrab,Custo),
+trabalhadores_prec_constrs(Tarefas,DatasDeInicio, HorasDeInicio, ListaDeVariaveis,Custo),
+term_variables([Custo,Concl,HorasDeInicio, DatasDeInicio,ListaDeVariaveis], Vars),
 
-%%labeling([ff,min(Cost),min(Concl)],Vars),
+%%labeling([ff,min(Custo),min(Concl)],Vars),
 %%labeling([ff,min(Concl)],Vars),
-bb_min(labeling(Vars),Cost, _),
+bb_min(labeling(Vars),Custo, _),
 
 write("Trabalhadores por atividade: "),
 writeln(ListaDeVariaveis),
@@ -43,9 +42,9 @@ writeln(HorasDeInicio),
 write("Datas de Início: "),
 writeln(DatasDeInicio),
 write("Custo: "),
-writeln(Cost),
+writeln(Custo),
 write("Trabalhadores Contratados: "),
-Contratados is Cost-MaxIndexTrab,
+Contratados is Custo-MaxIndexTrab,
 writeln(Contratados).
 
 
@@ -63,14 +62,23 @@ element_list(1, [X|T], X).
 element_list(N, [_|T], X):-
 	element_list(N_, T, X), N is N_ + 1.
 
+custo_constrs([],_).
+custo_constrs([Id|Resto], Custo) :-
+	writeln(Id),
+	Custo #>= Id,
+	custo_constrs(Resto, Custo).
 
-trabalhadores_prec_constrs([],_,_,_).
-trabalhadores_prec_constrs([ID|Tarefa], DatasDeInicio, HorasDeInicio, ListaDeVariaveis):-
+trabalhadores_prec_constrs([],_,_,_,_).
+trabalhadores_prec_constrs([ID|Tarefa], DatasDeInicio, HorasDeInicio, ListaDeVariaveis,Custo):-
 	element(ID, HorasDeInicio, Hi),
 	element(ID, DatasDeInicio, DataI),
 	element_list(ID, ListaDeVariaveis, TrabI),
+	custo_constrs(TrabI, Custo),
 	tarefa(ID,_,DurI,_,_),
-	trabalhadores_prec_constrs_(Tarefa, Hi, DataI, DurI, TrabI,HorasDeInicio, DatasDeInicio, ListaDeVariaveis).
+	trabalhadores_prec_constrs_(Tarefa, Hi, DataI, DurI, TrabI,HorasDeInicio, DatasDeInicio, ListaDeVariaveis),
+	trabalhadores_prec_constrs(Tarefa, DatasDeInicio, HorasDeInicio,ListaDeVariaveis,Custo).
+
+
 
 trabalhadores_prec_constrs_([],_,_,_,_,_,_,_).
 trabalhadores_prec_constrs_([IDJ|Tarefa], Hi, DataI, DurI,TrabI ,HorasDeInicio, DatasDeInicio, ListaDeVariaveis) :-
@@ -85,33 +93,32 @@ trabalhadores_prec_constrs_([IDJ|Tarefa], Hi, DataI, DurI,TrabI ,HorasDeInicio, 
 	trabalhadores_prec_constrs_(Tarefa, Hi, DataI, DurI, TrabI ,HorasDeInicio, DatasDeInicio, ListaDeVariaveis).
 
 
-
 trabalhadores_constrs([],[],_,_).
-trabalhadores_constrs([RequisitosTarefa|Resto], [SubFlat|ListaDeVariaveis], MaxIndexTrab,Cost) :-
+trabalhadores_constrs([RequisitosTarefa|Resto], [SubFlat|ListaDeVariaveis], MaxIndexTrab,Custo) :-
 	length(RequisitosTarefa, Nrequisitos),length(Sub,Nrequisitos),
-	construct_list(RequisitosTarefa,Sub, MaxIndexTrab,Cost), 
+	construct_list(RequisitosTarefa,Sub, MaxIndexTrab,Custo), 
 	flatten(Sub, SubFlat),
 	ic_global:alldifferent(SubFlat),
-	trabalhadores_constrs(Resto, ListaDeVariaveis,MaxIndexTrab,Cost).
+	trabalhadores_constrs(Resto, ListaDeVariaveis,MaxIndexTrab,Custo).
 
 construct_list([],[],_,_).
-construct_list([r(E,N)|RequisitosTarefa],[Sub1|Sub], MaxIndexTrab,Cost) :-
+construct_list([r(E,N)|RequisitosTarefa],[Sub1|Sub], MaxIndexTrab,Custo) :-
 	length(Sub1, N), 
-	fill_list(E,Sub1,MaxIndexTrab,Cost),
-	construct_list(RequisitosTarefa, Sub,MaxIndexTrab,Cost).
+	fill_list(E,Sub1,MaxIndexTrab,Custo),
+	construct_list(RequisitosTarefa, Sub,MaxIndexTrab,Custo).
 
 fill_list(_,[],_,_).
-fill_list(E,[X|Sub1],MaxIndexTrab,Cost):-
+fill_list(E,[X|Sub1],MaxIndexTrab,Custo):-
 	findall(IdTrab,(trabalhador(IdTrab, ListEspec),member(E,ListEspec)), ListIdsTrabs), 
 	MaxPlusOne is MaxIndexTrab + 1,
 	append(ListIdsTrabs, [MaxPlusOne..inf], Y),
 	X :: Y,    %%%%%%%%%%%
-	domain_lessthancost(X,Cost),
-	fill_list(E,Sub1,MaxIndexTrab,Cost).
+	domain_lessthancost(X,Custo),
+	fill_list(E,Sub1,MaxIndexTrab,Custo).
 
 domain_lessthancost(_,_).
-domain_lessthancost(X,Cost) :-
-	X #=< Cost.
+domain_lessthancost(X,Custo) :-
+	X #=< Custo.
 
 calendario_to_list([d(_,_,6)|Datas], RestoLista, DiaPrazo, MesPrazo, Prazo) :-
 	calendario_to_list(Datas,RestoLista,DiaPrazo,MesPrazo,Prazo).
